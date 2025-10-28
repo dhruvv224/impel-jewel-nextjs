@@ -9,6 +9,7 @@ import CartProvider from "./context/CartContext";
 import WishlistProvider from "./context/WishListContext";
 import ProfileProvider from "./context/ProfileContext";
 import ReadyDesignCartProvider from "./context/ReadyDesignCartContext";
+import 'bootstrap/dist/css/bootstrap.min.css';
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

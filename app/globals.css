@@ -2331,6 +2331,171 @@ input[type="file"] {
     border: none;
     width: 41px;
   }
+  /*
+ * ---------------------------------------------------
+ * NAV BAR STYLES (Overrides for Minimalist, Centered Look)
+ * ---------------------------------------------------
+ */
+
+/* Target the header wrapper to ensure full width and proper sticky behavior */
+.header,
+.sticky_header {
+  /* Inherit existing sticky styles, ensuring minimal padding/height on scroll */
+  height: auto;
+  min-height: 90px; /* Adjust as needed */
+}
+
+/* Ensure the navbar wrapper doesn't use standard Bootstrap padding/coloring */
+.header .navbar {
+  padding: 0;
+  /* Overrides 'bg-body-tertiary' in your component if present */
+  background-color: transparent !important;
+}
+
+/* 1. Primary Header Layout (Container for Nav, Logo, Icons) */
+.header_inner {
+  /* Grid setup to achieve: [ Nav Links ] [ Logo ] [ Icons ] */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr; 
+  align-items: center;
+  /* Reduced grid gap for a tighter look, adjust as needed */
+  grid-column-gap: 30px; 
+  width: 100%;
+  padding: 15px 0; /* Add vertical padding */
+}
+
+/* 2. Logo Centering */
+.header_inner .navbar-brand {
+  /* Ensures the logo itself is centrally positioned within its grid column */
+  display: flex;
+  justify-content: center;
+}
+
+/* 3. Navigation Links (Menu) - Spreading across the left/center space */
+.header_inner .collapse.navbar-collapse {
+  /* Allows the navigation links to grow and push the logo toward the center */
+  flex-grow: 1 !important; 
+}
+
+/* Style the main navigation list */
+.header_inner .collapse ul.navbar-nav {
+  /* Spread items across the available space, pushing HOME far left and CUSTOMIZATION far right */
+  display: flex;
+  justify-content: space-between; 
+  padding: 0;
+  margin: 0;
+}
+
+.header_inner .collapse ul.navbar-nav .nav-item {
+  /* Ensures links take minimal horizontal space */
+  margin: 0 10px;
+}
+
+.header_inner .collapse ul.navbar-nav .nav-link,
+.header_inner .collapse ul.navbar-nav .dropdown-toggle {
+  /* Tweak link styling for the clean look */
+  padding: 10px 12px;
+  font-size: 15px; /* Adjust size based on screenshot */
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.2s ease;
+}
+
+/* Ensure the 'Make by order' dropdown title is styled correctly */
+.header_inner .collapse ul.navbar-nav span.dropdown-toggle {
+    display: inline-block; /* Ensure span behaves like a link */
+    cursor: pointer;
+}
+
+/* 4. Icon/Profile Alignment */
+.header_icon ul {
+  /* Push icons to the far right within the right-most grid column */
+  justify-content: flex-end;
+  /* Ensure this list wraps its content and aligns items correctly */
+  display: flex;
+}
+
+.header_icon ul li {
+  /* Reduce space between icons */
+  margin-left: 10px;
+  margin-right: 0;
+}
+
+/* Hide the user name on desktop to match the minimalist look, 
+   but keep the profile picture (icon) visible. */
+.header_icon .user {
+  /* Hides the "Hello! user/dealer" text container */
+  display: none !important;
+}
+
+
+/* * ---------------------------------------------------
+ * MOBILE RESPONSIVE FIXES (Based on original app.css media queries)
+ * ---------------------------------------------------
+ */
+
+@media only screen and (max-width: 991px) {
+  /* On mobile, re-enable standard grid layout or stack content for mobile header */
+  .header_inner {
+    grid-template-columns: auto 1fr auto; /* [ Burger ] [ Logo ] [ Icons ] */
+    grid-column-gap: 15px;
+    padding: 10px 15px;
+  }
+  
+  /* Push logo to center of its new, smaller column */
+  .header_inner .navbar-brand {
+    justify-content: center;
+  }
+
+  /* Reset the navbar menu behavior for mobile to slide out */
+  .navbar-collapse {
+    position: absolute;
+    top: 100%; /* Below the header bar */
+    left: 0;
+    width: 100%;
+    /* Override width: 180px from original CSS to use full width */
+    height: auto !important;
+    background-color: #fff;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    z-index: 998; /* Below the sticky header */
+    transform: translateY(0); /* Default position for hidden menu */
+    visibility: hidden;
+    opacity: 0;
+    transition: 0.3s ease-out;
+  }
+
+  .navbar-collapse.show {
+    visibility: visible;
+    opacity: 1;
+  }
+
+  /* Menu items should stack vertically on mobile */
+  .header_inner .collapse ul.navbar-nav {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px 0;
+  }
+
+  .header_icon .user {
+    /* Ensure user name/text is visible inside the profile dropdown menu on mobile/dropdown open */
+    display: block !important; 
+  }
+  
+  /* Fix the tags dropdown positioning on mobile */
+  .make-by-order-dropdown {
+    position: static !important; /* Forces it to flow within the mobile menu */
+    width: 100% !important;
+    box-shadow: none;
+    background: transparent;
+    border: none;
+    /* Reset active state transform logic */
+    opacity: 1;
+    visibility: visible;
+    transform: none; 
+    padding: 0 10px; /* Adjust padding within menu */
+  }
+}
 
   .explore_banner .banner_info_inr {
     padding: 30px 30px;

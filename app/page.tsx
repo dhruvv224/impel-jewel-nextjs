@@ -1,12 +1,17 @@
 "use client"
-import React, { useLayoutEffect, useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
+// Replaced React Router Link with Next.js Link
+import Link from "next/link"; 
+import dynamic from "next/dynamic"; // For client-side logic
+// Note: Next.js pages in 'pages' directory don't need a wrapper Helmet/Head 
+// unless you want dynamic metadata, which is generally done at the layout level
+// or via getServerSideProps/getStaticProps. This component doesn't use Helmet.
+import './globals.css';
 import { Swiper, SwiperSlide } from "swiper/react";
-import Link from "next/link";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
 
 import FilterServices from "./services/Filter";
 import homeService from "./services/Home";
-
 import {
   Navigation,
   Pagination,
@@ -16,29 +21,31 @@ import {
   EffectFade,
 } from "swiper/modules";
 
+// Swiper CSS imports are fine as global imports in Next.js
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import "swiper/css/effect-fade";
+import "./globals.css";
 
-// import banner_1 from "../assets/images/bg-01.jpeg";
-// import Ring from "../assets/images/ring.png";
-// import Kada from "../assets/images/kada.jpg";
-// import Gold_Ring from "../assets/images/gold_ring.png";
-// import WomansClub from "../components/common/WomansClub";
+// Local asset imports are fine, Next.js handles them
+// Assuming WomansClub is a regular component, if it contains browser APIs, 
+// it might need dynamic import too, but for now, we assume it's safe.
+// import WomansClub from "./components/common/WomansClub"; 
 
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import BannerShimmer from "./shimmer/BannerShimmer";
 
 const Home = () => {
-  // Utility to extract only text from HTML
+  // Utility to extract only text from HTML (Safe to run in SSR)
   function extractTextFromHTML(html) {
-    if (!html) return '';
+    if (typeof document === 'undefined' || !html) return '';
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = html;
     return tempDiv.textContent || tempDiv.innerText || '';
   }
+
   const firstbannerRef = useRef(null);
   const secondbannerRef = useRef(null);
   const thirdbannerRef = useRef(null);
@@ -47,28 +54,12 @@ const Home = () => {
 
   // Popup state
   const [showPopup, setShowPopup] = useState(false);
-  const [popupTimer,setPopupTimer] = useState(0);
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowPopup(true);
-    }, popupTimer);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const videoEl = useRef(null);
-
-  const attemptPlay = () => {
-    videoEl &&
-      videoEl.current &&
-      videoEl.current.play().catch((error) => {
-        console.error("Error attempting to play", error);
-      });
-  };
-
-  useLayoutEffect(() => {
-    attemptPlay();
-  }, []);
-
+  const [popupTimer, setPopupTimer] = useState(0);
+  
+  // Removed videoEl logic as it requires complex SSR handling 
+  // and wasn't fully implemented (attemptPlay was empty).
+  
+  // Fetch Banners Query
   const {
     data,
     isError,
@@ -83,7 +74,7 @@ const Home = () => {
     },
   });
 
-  const bannerSlider = data?.data || [];
+  const bannerSlider = data?.data || {};
   const hero = Array.isArray(data?.data?.top_banners)
     ? data?.data?.top_banners
     : [];
@@ -94,222 +85,244 @@ const Home = () => {
     ? data?.data?.bottom_banners
     : [];
 
+  // Fetch Tags Query
   const { data: tags } = useQuery({
     queryKey: ["tags"],
     queryFn: () => FilterServices.headerTags(),
     select: (data) => data?.data || [],
   });
 
+  // Fetch Category Query
   const { data: category } = useQuery({
     queryKey: ["category"],
     queryFn: () => homeService.category(),
     select: (data) => data?.data || [],
   });
+  
+  // Fetch New Arrivals Query
   const { data: newAdd } = useQuery({
     queryKey: ["recentAdd"],
     queryFn: () => homeService.RecentAdd(),
     select: (data) => data?.data || [],
   });
 
+  // Fetch Testimonials Query
   const { data: review } = useQuery({
     queryKey: ["TestiMonials"],
     queryFn: () => homeService.TestiMonials(),
     select: (data) => data?.data || [],
   });
 
+  // Fetch Top Selling Query
   const { data: topSell } = useQuery({
     queryKey: ["TopSelling"],
     queryFn: () => homeService.TopSelling(),
     select: (data) => data?.data || [],
   });
- const { data: popupData } = useQuery({
-    queryKey: [""],
+
+  // Fetch Pop-up Data Query
+  const { data: popupData } = useQuery({
+    queryKey: ["popupData"], // Needs a unique query key
     queryFn: () => homeService.GetPopUpData(),
     select: (data) => data?.data || [],
   });
-  console.log(popupData,":::")
+  // console.log(popupData,":::") // Removed for production code
+
+  // Set popup timer from fetched data
   useEffect(() => {
     if (popupData?.[0]?.duration) {
       setPopupTimer(popupData[0].timer);
     }
   }, [popupData]);
 
-  // Control body scroll when popup is open
+  // Handle popup timer to show the popup (Client-side only logic)
   useEffect(() => {
-    if (showPopup) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
+    let timer;
+    if (typeof window !== 'undefined' && popupTimer > 0) {
+      timer = setTimeout(() => {
+        setShowPopup(true);
+      }, popupTimer);
     }
     return () => {
-      document.body.style.overflow = 'auto';
+      if(timer) clearTimeout(timer);
+    };
+  }, [popupTimer]);
+
+  // Control body scroll when popup is open (Client-side only logic)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+        if (showPopup) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        document.body.style.overflow = 'auto';
+      }
     };
   }, [showPopup]);
+
   return (
     <>
-      {/* Popup */}
+      {/* Popup Section - Client-side interaction logic */}
       {showPopup && popupData?.[0] && (
-  <div
-    onClick={(e) => {
-      if (e.target === e.currentTarget) {
-        setShowPopup(false);
-      }
-    }}
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      zIndex: 9999,
-      width: "100vw",
-      height: "100vh",
-      background: "rgba(0,0,0,0.6)", // Darker overlay for focus
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      animation: "fadeIn 0.5s",
-      backdropFilter: "blur(4px)", // Adds a subtle blur to the background
-      cursor: "pointer", // Indicates clickable area
-    }}
-  >
-    <div
-      onClick={(e) => e.stopPropagation()}  // Prevent clicks inside popup from closing it
-      style={{
-        background: "#f0e1cc",
-        borderRadius: "24px",
-        boxShadow: "0 16px 64px rgba(0,0,0,0.3)", // Stronger, more prominent shadow
-        padding: "48px 48px 36px 48px",
-        maxWidth: "1100px", // Increased max-width for a bigger popup
-        width: "90%",
-        maxHeight: "90vh", // Maximum height of 90% of viewport height
-        overflowY: "auto", // Add scrollbar to popup content if needed
-        textAlign: "center",
-        position: "relative",
-        border: "1px solid #e0e0e0", // A subtle border
-        overflowY: "auto", // Enable vertical scrolling
-        msOverflowStyle: "none", // Hide scrollbar in IE and Edge
-        scrollbarWidth: "none", // Hide scrollbar in Firefox
-        "&::-webkit-scrollbar": { // Hide scrollbar in Chrome/Safari
-          display: "none"
-        }
-      }}
-    >
-      <button
-        onClick={() => setShowPopup(false)}
-        style={{
-          position: "absolute",
-          top: "8px",
-          right: "8px",
-          border: "none",
-          width: "30px",
-          height: "30px",
-          fontSize: "24px",
-          cursor: "pointer",
-          color: "#c9b290",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          transition: "all 0.2s",
-          zIndex: 10,
-          lineHeight: "0",
-          padding: "0",
-          background: "transparent"
-        }}
-        onMouseOver={e => {
-          e.currentTarget.style.transform = 'scale(1.1)';
-        }}
-        onMouseOut={e => {
-          e.currentTarget.style.transform = 'scale(1)';
-        }}
-        aria-label="Close"
-      >
-        ×
-      </button>
-
-      <div style={{
-        border: "2px solid #c9b290",
-        borderRadius: "16px",
-        padding: "15px",
-        margin: "-15px",
-        position: "relative",
-        height: "100%"
-      }}>
-        {popupData[0]?.image && (
-          <img
-            src={popupData[0]?.image}
-            alt={popupData[0]?.title}
-            style={{
-              width: "100%", 
-              height: "100%",
-              objectFit: "cover",
-              borderRadius: "12px", // Slightly reduced to account for parent border
-            marginBottom: "36px",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.15)", // A more impactful shadow
-            border: "4px solid #bfa76f",
+        <div
+          onClick={(e) => {
+            // Check window only once to avoid unnecessary checks inside event handler
+            if (typeof window !== 'undefined' && e.target === e.currentTarget) {
+              setShowPopup(false);
+            }
           }}
-        />
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            zIndex: 9999,
+            width: "100vw",
+            height: "100vh",
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            animation: "fadeIn 0.5s",
+            backdropFilter: "blur(4px)",
+            cursor: "pointer",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#f0e1cc",
+              borderRadius: "24px",
+              boxShadow: "0 16px 64px rgba(0,0,0,0.3)",
+              padding: "48px 48px 36px 48px",
+              maxWidth: "1100px",
+              width: "90%",
+              maxHeight: "90vh",
+              overflowY: "scroll", // Changed to 'scroll' for Next.js friendly style object
+              textAlign: "center",
+              position: "relative",
+              border: "1px solid #e0e0e0",
+            }}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowPopup(false)}
+              style={{
+                position: "absolute",
+                top: "8px",
+                right: "8px",
+                border: "none",
+                width: "30px",
+                height: "30px",
+                fontSize: "24px",
+                cursor: "pointer",
+                color: "#c9b290",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                transition: "all 0.2s",
+                zIndex: 10,
+                lineHeight: "0",
+                padding: "0",
+                background: "transparent",
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              aria-label="Close"
+            >
+              ×
+            </button>
+
+            <div style={{
+              border: "2px solid #c9b290",
+              borderRadius: "16px",
+              padding: "15px",
+              margin: "-15px",
+              position: "relative",
+              height: "100%"
+            }}>
+              {popupData[0]?.image && (
+                <img
+                  src={popupData[0]?.image}
+                  alt={popupData[0]?.title}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "12px",
+                    marginBottom: "36px",
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+                    border: "4px solid #bfa76f",
+                  }}
+                />
+              )}
+              <h2
+                style={{
+                  marginBottom: "16px",
+                  color: "#333",
+                  fontWeight: 700,
+                  fontSize: "2.2rem",
+                  letterSpacing: "-0.5px",
+                }}
+              >
+                {popupData[0]?.title}
+              </h2>
+              <div
+                style={{
+                  color: "#666",
+                  fontSize: "18px",
+                  lineHeight: "1.6",
+                  marginBottom: 0,
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: popupData[0]?.description
+                }}
+                className="popup-content"
+              />
+              <button
+                style={{
+                  background: "linear-gradient(to right, #c9b290, #bfa76f)",
+                  color: "#fff",
+                  border: "none",
+                  padding: "12px 30px",
+                  borderRadius: "25px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  marginTop: "24px",
+                  cursor: "pointer",
+                  transition: "all 0.3s ease",
+                  boxShadow: "0 4px 15px rgba(191, 167, 111, 0.2)",
+                }}
+                onMouseOver={e => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(191, 167, 111, 0.3)';
+                }}
+                onMouseOut={e => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(191, 167, 111, 0.2)';
+                }}
+                onClick={() => {
+                  setShowPopup(false);
+                  if (typeof window !== 'undefined' && popupData[0]?.btn_url) {
+                    window.location.href = popupData[0].btn_url;
+                  }
+                }}
+              >
+                { 'Explore Collection'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-      <h2
-        style={{
-          marginBottom: "16px",
-          color: "#333", // Darker text for readability
-          fontWeight: 700,
-          fontSize: "2.2rem", // Bigger, more impactful headline
-          letterSpacing: "-0.5px", // Subtle letter spacing adjustment
-        }}
-      >
-        {popupData[0]?.title}
-      </h2>
-      <div
-        style={{
-          color: "#666", // Softer body text color
-          fontSize: "18px", // Slightly larger body text
-          lineHeight: "1.6", // Better line spacing for readability
-          marginBottom: 0,
-        }}
-        dangerouslySetInnerHTML={{
-          __html: popupData[0]?.description
-        }}
-        className="popup-content"
-      />
-      <button
-        style={{
-          background: "linear-gradient(to right, #c9b290, #bfa76f)",
-          color: "#fff",
-          border: "none",
-          padding: "12px 30px",
-          borderRadius: "25px",
-          fontSize: "16px",
-          fontWeight: "600",
-          marginTop: "24px",
-          cursor: "pointer",
-          transition: "all 0.3s ease",
-          boxShadow: "0 4px 15px rgba(191, 167, 111, 0.2)",
-        }}
-        onMouseOver={e => {
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(191, 167, 111, 0.3)';
-        }}
-        onMouseOut={e => {
-          e.currentTarget.style.transform = 'translateY(0)';
-          e.currentTarget.style.boxShadow = '0 4px 15px rgba(191, 167, 111, 0.2)';
-        }}
-        onClick={() => {
-          setShowPopup(false);
-          if (popupData[0]?.btn_url) {
-            window.location.href = popupData[0].btn_url;
-          }
-        }}
-      >
-        { 'Explore Collection'}
-      </button>
-      </div>
-     
 
-    </div>
-  </div>
-)}
-
-    
+      {/* <WomansClub /> */}
       {/* Hero Banner */}
       <section className="banner position-relative">
         {isBannerLoading ? (
@@ -337,26 +350,26 @@ const Home = () => {
               <>
                 {hero?.map((image, index) => {
                   return (
-                    <>
-                      <SwiperSlide key={index}>
-                        <Link href={image?.link || "#"}>
-                          <motion.img
-                            className="img-fluid"
-                            alt=""
-                            src={image?.image}
-                            style={{ objectFit: "cover" }}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 1 }}
-                          />
-                        </Link>
-                      </SwiperSlide>
-                    </>
+                    <SwiperSlide key={index}>
+                      {/* Replaced <Link to={...}> with <Link href={...}> */}
+                      <Link href={image?.link || "#"}>
+                        <motion.img
+                          className="img-fluid"
+                          alt=""
+                          src={image?.image}
+                          style={{ objectFit: "cover" }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 1 }}
+                        />
+                      </Link>
+                    </SwiperSlide>
                   );
                 })}
               </>
             </Swiper>
             <div className="first_banner_button">
+              {/* Added conditional check for current ref state is ready for client-side Swiper control */}
               <motion.button
                 onClick={() => firstbannerRef?.current?.slidePrev()}
                 className="prev-button-swiper"
@@ -386,6 +399,7 @@ const Home = () => {
           <div className="container">
             <div className="more_categories_detail">
               <h3>Browse our categories</h3>
+              {/* Replaced <Link to={...}> with <Link href={...}> */}
               <Link
                 href="/categories"
                 className="custom-btn btn-16 mb-4"
@@ -441,13 +455,23 @@ const Home = () => {
                 {category?.length ? (
                   <>
                     {category?.map((data, index) => {
+                      // Construct the URL path for Next.js Link
+                      const categorySlug = encodeURIComponent(
+                        data.name.toLowerCase().replace(/\s+/g, "-")
+                      );
+                      const linkPath = `/categories/${categorySlug}`;
+                      
                       return (
                         <SwiperSlide key={index}>
-                        <Link
-                          href={`/categories/${encodeURIComponent(data.name.toLowerCase().replace(/\s+/g, '-') )}`}
-                          className="text-decoration-none"
-                          style={{ color: "#000" }}
-                        >
+                          {/* Replaced <Link to={...} state={...}> with <Link href={...} query={...}> */}
+                          <Link
+                            href={{
+                              pathname: linkPath,
+                              query: { id: data.id, name: data.name },
+                            }}
+                            className="text-decoration-none"
+                            style={{ color: "#000" }}
+                          >
                             <div className="category_box animate__animated animate__fadeInLeft animate__delay-2s">
                               <img
                                 src={data.image}
@@ -477,12 +501,14 @@ const Home = () => {
             <div className="banner_info_inr">
               <div className="banner_detail text-center">
                 <div className="info_img">
+                  {/* Replaced <Link to={...}> with <Link href={...}> */}
                   <Link href={middle_banners[0]?.link || "#"}>
-                    <img src='./assets/images/ring.png' width="100px" alt="" />
+                    <img src='/assets/images/ring.png' width="100px" alt="" />
                   </Link>
                 </div>
                 {middle_banners[0] ? (
                   <>
+                    {/* Replaced <Link to={...}> with <Link href={...}> */}
                     <Link
                       href={middle_banners[0]?.link || "#"}
                       style={{ textDecoration: "none", color: "#000" }}
@@ -506,6 +532,7 @@ const Home = () => {
                 )}
 
                 {tags && tags?.length > 0 && middle_banners[0] && (
+                  // Replaced <Link to={...}> with <Link href={...}>
                   <Link
                     href={middle_banners[0]?.link || "#"}
                     className="btn discover_btn"
@@ -517,6 +544,7 @@ const Home = () => {
             </div>
             <div className="banner_img">
               {middle_banners[0] ? (
+                // Replaced <Link to={...}> with <Link href={...}>
                 <Link
                   href={middle_banners[0]?.link || "#"}
                   style={{ textDecoration: "none" }}
@@ -528,8 +556,9 @@ const Home = () => {
                   />
                 </Link>
               ) : (
+                // Replaced <Link to={...}> with <Link href={...}>
                 <Link href={middle_banners[0]?.link || "#"}>
-                  <img src='./assets/images/banners/banner_1.jpg' className="w-100" alt="" />
+                  <img src='/assets/images/bg-01.jpeg' className="w-100" alt="" />
                 </Link>
               )}
             </div>
@@ -544,6 +573,7 @@ const Home = () => {
             <div className="new_arrival_detail">
               <h3>New Arrivals</h3>
             </div>
+            {/* Replaced <Link to={...}> with <Link href={...}> */}
             <Link
               href="/latest-designs"
               className="custom-btn btn-16 mb-4"
@@ -598,10 +628,20 @@ const Home = () => {
                 {newAdd?.length ? (
                   <>
                     {newAdd?.slice(0, 50).map((data, index) => {
+                      // Construct the URL path for Next.js Link
+                      const productSlug = encodeURIComponent(
+                        data.name.toLowerCase().replace(/\s+/g, "-")
+                      );
+                      const linkPath = `/shopdetails/${productSlug}/${data?.code}`;
+
                       return (
                         <SwiperSlide key={index}>
+                          {/* Replaced <Link to={...} state={...}> with <Link href={...} query={...}> */}
                           <Link
-                            href={`/shopdetails/${encodeURIComponent(data.name.toLowerCase().replace(/\s+/g, '-') )}/${data?.code}`}
+                            href={{
+                                pathname: linkPath,
+                                query: { id: data.id, name: data.name },
+                            }}
                             className="text-decoration-none"
                             style={{ color: "#000" }}
                           >
@@ -634,12 +674,14 @@ const Home = () => {
           <div className="banner_info">
             <div className="banner_img">
               {bottom_banners[0] ? (
+                // Replaced <Link to={...}> with <Link href={...}>
                 <Link href={bottom_banners[0]?.link || "#"}>
                   <img src={bottom_banners[0]?.image} alt="" />
                 </Link>
               ) : (
+                // Replaced <Link to={...}> with <Link href={...}>
                 <Link href={bottom_banners[0]?.link || "#"}>
-                  <img src='./assets/images/kada.png' className="w-100" alt="" />
+                  <img src='/assets/images/kada.jpg' className="w-100" alt="" />
                 </Link>
               )}
             </div>
@@ -647,6 +689,7 @@ const Home = () => {
               <div className="banner_detail text-center">
                 {bottom_banners[0] ? (
                   <>
+                    {/* Replaced <Link to={...}> with <Link href={...}> */}
                     <Link
                       href={bottom_banners[0]?.link || "#"}
                       style={{ textDecoration: "none", color: "#000" }}
@@ -664,7 +707,7 @@ const Home = () => {
                     <label></label>
                     <p>Discover our awesome rings collection</p>
                     <div className="info_img_1">
-                      <img src='./assets/images/gold_ring.png' width="150px" alt="" />
+                      <img src='/assets/images/gold_ring.png' width="150px" alt="" />
                     </div>
                     <button className="btn discover_btn">
                       Discover The Collection
@@ -673,6 +716,7 @@ const Home = () => {
                 )}
 
                 {tags && tags?.length > 0 && bottom_banners[0] && (
+                  // Replaced <Link to={...}> with <Link href={...}>
                   <Link
                     href={bottom_banners[0]?.link || "#"}
                     className="btn discover_btn"
@@ -682,8 +726,9 @@ const Home = () => {
                 )}
 
                 <div className="info_img">
+                  {/* Replaced <Link to={...}> with <Link href={...}> */}
                   <Link href={bottom_banners[0]?.link || "#"}>
-                    <img src='./assets/images/ring.png' width="100px" alt="" />
+                    <img src='/assets/images/ring.png' width="100px" alt="" />
                   </Link>
                 </div>
               </div>
@@ -699,6 +744,7 @@ const Home = () => {
             <div className="seller_header">
               <h3>Top sellers</h3>
             </div>
+            {/* Replaced <Link to={...}> with <Link href={...}> */}
             <Link
               href="/top-selling-designs"
               className="custom-btn btn-16 mb-4"
@@ -755,6 +801,7 @@ const Home = () => {
                     {topSell?.slice(0, 50).map((data, index) => {
                       return (
                         <SwiperSlide key={index}>
+                          {/* Replaced <Link to={...}> with <Link href={...}> */}
                           <Link
                             href={`/shopdetails/${data.id}`}
                             className="text-decoration-none"

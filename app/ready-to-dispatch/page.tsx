@@ -16,7 +16,7 @@ import profileService from "../services/Home";
 import DealerPdf from "../services/Dealer/PdfShare";
 // import { Helmet } from "react-helmet-async";
 
-const imageURL = process.env.REACT_APP_API_KEY_IMAGE_;
+const imageURL =  'https://api.indianjewelcast.com';
 
 // Debounce utility function
 const debounce = (func, wait) => {
@@ -515,6 +515,7 @@ const handleSearchItems = (e) => {
               {products.length > 0 ? (
                 <>
                   {products.map((data, index) => {
+                    console.log(data,'data')
                     const sales_wastage_of_category = finalPrice[1]?.sales_wastage[data?.SubItemID] || 0;
                     const sales_wastage_discount_of_category = finalPrice[2]?.sales_wastage_discount[data?.SubItemID] || 0;
                     let labour_charge =

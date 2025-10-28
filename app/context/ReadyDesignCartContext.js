@@ -1,3 +1,4 @@
+"use client"
 import React, { createContext, useEffect, useReducer } from "react";
 import axios from "axios";
 const api = process.env.REACT_APP_API_KEY;
