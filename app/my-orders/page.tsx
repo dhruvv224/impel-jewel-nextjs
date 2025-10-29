@@ -1,21 +1,30 @@
+'use client'; // ⬅️ REQUIRED: Uses state, useEffect, and client-side navigation.
+
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+// ✅ Next.js App Router replacement for navigation
+import { useRouter } from "next/navigation"; 
 import { FaEye } from "react-icons/fa";
-import Userservice from "../../services/Cart";
-import { Helmet } from "react-helmet-async";
+import Userservice from "../services/Cart"; // Assuming correct path
+// ✅ Next.js Head replacement for metadata
+import Head from "next/head"; 
 import { OverlayTrigger, Pagination, Tooltip } from "react-bootstrap";
-import Loader from "../../components/common/Loader";
+import Loader from "../components/common/Loader";
 
 const MyOrders = () => {
-  const navigate = useNavigate();
+  // ❌ Original: const navigate = useNavigate();
+  // ✅ Next.js replacement
+  const router = useRouter(); 
+
+  // NOTE: localStorage access is safe here because this is a 'use client' component.
   const user_id = localStorage.getItem("user_id");
   const user_type = localStorage.getItem("user_type");
+  
   const [Items, setItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // Pagination function
+  // Pagination function remains the same
   const paginate = (array, currentPage, itemsPerPage) => {
     if (!Array.isArray(array)) return [];
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -24,6 +33,12 @@ const MyOrders = () => {
   };
 
   const GetAllOrders = async () => {
+    // Only fetch if user_id and user_type are available
+    if (!user_id || !user_type) {
+        setIsLoading(false);
+        return; 
+    }
+    
     Userservice.UserOrders({ user_type: user_type, user_id: user_id })
       .then((res) => {
         setItems(res.data);
@@ -36,8 +51,9 @@ const MyOrders = () => {
   };
 
   useEffect(() => {
+    // Re-run API call when the current page changes
     GetAllOrders();
-  }, [currentPage]);
+  }, [currentPage]); 
 
   const paginatedItems = paginate(Items, currentPage, itemsPerPage);
   const totalPages = Math.ceil(Items.length / itemsPerPage);
@@ -46,12 +62,20 @@ const MyOrders = () => {
     setCurrentPage(pageNumber);
   };
 
+  // Function for Next.js navigation
+  const handleViewOrder = (orderId) => {
+    // ✅ Next.js programmatic navigation
+    router.push(`/order-details/${orderId}`);
+  };
+
   const orderDetails = <Tooltip id="tooltip">View order</Tooltip>;
+
   return (
     <>
-      <Helmet>
+      {/* ✅ Replaced Helmet with Next.js Head component */}
+      <Head>
         <title>Impel Store - My orders</title>
-      </Helmet>
+      </Head>
       <section className="cart">
         {isLoading ? (
           <Loader />
@@ -87,107 +111,106 @@ const MyOrders = () => {
                                   const phoneNumber =
                                     datas?.customer_phone?.replace("+91", "");
                                   return (
-                                    <>
-                                      <tr key={index}>
-                                        <td>
-                                          <span>{datas?.order_id}</span>
-                                        </td>
-                                        <td>
-                                          <span>{datas?.customer}</span>
-                                        </td>
-                                        <td>
-                                          <span>{phoneNumber}</span>
-                                        </td>
-                                        <td>
-                                          {datas?.dealer ? (
-                                            <span>{datas?.dealer}</span>
-                                          ) : (
-                                            <span>-</span>
-                                          )}
-                                        </td>
-                                        <td>
-                                          {datas?.dealer_code ? (
-                                            <span>{datas?.dealer_code}</span>
-                                          ) : (
-                                            <span>-</span>
-                                          )}
-                                        </td>
-                                        {user_type == 1 ? (
-                                          <td>
-                                            <span>
-                                              ₹
-                                              {Math.round(
-                                                datas?.dealer_commission
-                                              )}
-                                            </span>
-                                          </td>
+                                    // Removed unnecessary React Fragment wrapper
+                                    <tr key={index}>
+                                      <td>
+                                        <span>{datas?.order_id}</span>
+                                      </td>
+                                      <td>
+                                        <span>{datas?.customer}</span>
+                                      </td>
+                                      <td>
+                                        <span>{phoneNumber}</span>
+                                      </td>
+                                      <td>
+                                        {datas?.dealer ? (
+                                          <span>{datas?.dealer}</span>
                                         ) : (
-                                          ""
+                                          <span>-</span>
                                         )}
-
-                                        {user_type == 1 ? (
-                                          <td>
-                                            {datas?.commission_status == 1 && (
-                                              <span className="badge bg-success">
-                                                Paid
-                                              </span>
-                                            )}
-                                            {datas?.commission_status == 0 && (
-                                              <span className="badge bg-danger">
-                                                Unpaid
-                                              </span>
-                                            )}
-                                          </td>
+                                      </td>
+                                      <td>
+                                        {datas?.dealer_code ? (
+                                          <span>{datas?.dealer_code}</span>
                                         ) : (
-                                          ""
+                                          <span>-</span>
                                         )}
-
-                                        <td>
-                                          {datas?.order_status == "pending" && (
-                                            <span className="badge bg-warning">
-                                              Pending
-                                            </span>
-                                          )}
-                                          {datas?.order_status ==
-                                            "accepted" && (
-                                            <span className="badge bg-info">
-                                              Accepted
-                                            </span>
-                                          )}
-                                          {datas?.order_status ==
-                                            "processing" && (
-                                            <span className="badge bg-primary">
-                                              Processing
-                                            </span>
-                                          )}
-                                          {datas?.order_status ==
-                                            "completed" && (
-                                            <span className="badge bg-success">
-                                              Completed
-                                            </span>
-                                          )}
-                                        </td>
+                                      </td>
+                                      {user_type == 1 ? (
                                         <td>
                                           <span>
-                                            <OverlayTrigger
-                                              placement="top"
-                                              overlay={orderDetails}
-                                            >
-                                              <h5
-                                                onClick={() =>
-                                                  navigate(
-                                                    `/order-details/${datas?.order_id}`
-                                                  )
-                                                }
-                                                style={{ cursor: "pointer" }}
-                                              >
-                                                <FaEye />
-                                              </h5>
-                                            </OverlayTrigger>
+                                            ₹
+                                            {Math.round(
+                                              datas?.dealer_commission
+                                            )}
                                           </span>
                                         </td>
-                                      </tr>
-                                    </>
+                                      ) : (
+                                        ""
+                                      )}
+
+                                      {user_type == 1 ? (
+                                        <td>
+                                          {datas?.commission_status == 1 && (
+                                            <span className="badge bg-success">
+                                              Paid
+                                            </span>
+                                          )}
+                                          {datas?.commission_status == 0 && (
+                                            <span className="badge bg-danger">
+                                              Unpaid
+                                            </span>
+                                          )}
+                                        </td>
+                                      ) : (
+                                        ""
+                                      )}
+
+                                      <td>
+                                        {datas?.order_status == "pending" && (
+                                          <span className="badge bg-warning">
+                                            Pending
+                                          </span>
+                                        )}
+                                        {datas?.order_status == "accepted" && (
+                                          <span className="badge bg-info">
+                                            Accepted
+                                          </span>
+                                        )}
+                                        {datas?.order_status ==
+                                          "processing" && (
+                                          <span className="badge bg-primary">
+                                            Processing
+                                          </span>
+                                        )}
+                                        {datas?.order_status ==
+                                          "completed" && (
+                                          <span className="badge bg-success">
+                                            Completed
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td>
+                                        <span>
+                                          <OverlayTrigger
+                                            placement="top"
+                                            overlay={orderDetails}
+                                          >
+                                            <h5
+                                              // ✅ Call the Next.js navigation function
+                                              onClick={() =>
+                                                handleViewOrder(
+                                                  datas?.order_id
+                                                )
+                                              }
+                                              style={{ cursor: "pointer" }}
+                                            >
+                                              <FaEye />
+                                            </h5>
+                                          </OverlayTrigger>
+                                        </span>
+                                      </td>
+                                    </tr>
                                   );
                                 })}
                               </>

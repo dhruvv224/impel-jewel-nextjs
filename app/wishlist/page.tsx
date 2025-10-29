@@ -1,23 +1,30 @@
+'use client'; // ⬅️ REQUIRED: Uses state, effects, local storage, and context.
+
 import React, { useContext, useState, useEffect } from "react";
-import Userservice from "../../services/Auth";
-import { Link } from "react-router-dom";
-import loadinggif from "../../assets/video/impel-bird-unscreen.gif";
+// ✅ Next.js App Router replacements
+import { useRouter } from "next/navigation";
+import Link from "next/link"; 
+import Head from "next/head"; // Replaces Helmet
+
+import Userservice from "../services/Auth";
 import { CgSpinner } from "react-icons/cg";
-import { WishlistSystem } from "../../context/WishListContext";
-import UserCartService from "../../services/Cart";
+import { WishlistSystem } from "../context/WishListContext";
+import UserCartService from "../services/Cart";
 import toast from "react-hot-toast";
-import { Helmet } from "react-helmet-async";
-import emptywishlist from "../../assets/images/empty-wishlist.png";
 import { FaLongArrowAltLeft } from "react-icons/fa";
 import { FaCartShopping } from "react-icons/fa6";
 import { AiFillDelete } from "react-icons/ai";
-import { CartSystem } from "../../context/CartContext";
-import Loader from "../../components/common/Loader";
+import { CartSystem } from "../context/CartContext";
+import Loader from "../components/common/Loader";
 
 const WishList = () => {
+  // Accessing localStorage is safe within a 'use client' component.
   const phone = localStorage.getItem("phone");
   const { dispatch: addtocartDispatch } = useContext(CartSystem);
   const { dispatch: removeWishlistDispatch } = useContext(WishlistSystem);
+
+  // ✅ Next.js Router for programmatic navigation
+  const router = useRouter(); 
 
   const [items, setItems] = useState([]);
   const [removingItemId, setRemovingItemId] = useState(null);
@@ -27,6 +34,12 @@ const WishList = () => {
   const [removeCartItems, setRemoveCartItems] = useState(null);
 
   const GetUserWishlist = async () => {
+    // Only attempt to fetch if phone is available
+    if (!phone) {
+        setIsLoading(false);
+        return;
+    }
+    
     Userservice.userWishlist({ phone: phone })
       .then((res) => {
         setItems(res?.data?.wishlist_items);
@@ -39,6 +52,8 @@ const WishList = () => {
   };
 
   const GetUserCartList = async () => {
+    if (!phone) return;
+    
     UserCartService.CartList({ phone: phone })
       .then((res) => {
         setCartItems(res.data.cart_items);
@@ -117,7 +132,7 @@ const WishList = () => {
   useEffect(() => {
     GetUserWishlist();
     GetUserCartList();
-  }, []);
+  }, [phone]); // Added 'phone' to dependency array
 
   const goldColor = {
     yellow_gold: "Yellow Gold",
@@ -130,9 +145,10 @@ const WishList = () => {
 
   return (
     <>
-      <Helmet>
+      {/* ✅ Replaced Helmet with Next.js Head component for metadata */}
+      <Head>
         <title>Impel Store - Wishlist</title>
-      </Helmet>
+      </Head>
       <section className="wishlist">
         <div className="container">
           <div>
@@ -149,10 +165,11 @@ const WishList = () => {
                         </h2>
                         {items?.map((product) => {
                           return (
-                            <div className="col-md-6 col-lg-3">
+                            <div className="col-md-6 col-lg-3" key={product.id}>
                               <div className="card">
                                 <Link
-                                  to={`/shopdetails/${product?.id}`}
+                                  // ✅ Next.js Link uses 'href'
+                                  href={`/shopdetails/${product?.id}`}
                                   className="product_data"
                                 >
                                   <img
@@ -165,7 +182,8 @@ const WishList = () => {
                                   <div className="cvp">
                                     <h5 className="card-title fw-bolder">
                                       <Link
-                                        to={`/shopdetails/${product?.id}`}
+                                        // ✅ Next.js Link uses 'href'
+                                        href={`/shopdetails/${product?.id}`}
                                         className="product_data"
                                       >
                                         {product?.name}
@@ -276,7 +294,7 @@ const WishList = () => {
                         </div>
                         <div className="text-center my-4">
                           <img
-                            src={emptywishlist}
+                            src='/assets/images/empty-wishlist.png'
                             alt="Empty Cart Illustration"
                             className="img-fluid mb-3"
                             style={{ maxWidth: "200px" }}
@@ -292,7 +310,8 @@ const WishList = () => {
 
                         <div className="text-center">
                           <Link
-                            to="/shop"
+                            // ✅ Next.js Link uses 'href'
+                            href="/shop" 
                             className="view_all_btn px-4 py-2"
                             style={{ borderRadius: "8px" }}
                           >

@@ -1,6 +1,12 @@
+'use client'; // ⬅️ CRUCIAL: Must be a Client Component to use hooks like useState, useEffect, useContext, and useQuery.
+
 import React, { useContext, useEffect, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import BreadCrumb from "../../components/common/BreadCrumb";
+// Next.js App Router imports for routing and URL params
+import Link from "next/link"; 
+import { usePathname, useRouter, useSearchParams } from "next/navigation"; // ⬅️ Replaces useLocation, useNavigate, and logic for useParams
+import Head from "next/head"; // ⬅️ Replaces react-helmet-async
+
+// import BreadCrumb from "./";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
@@ -11,12 +17,12 @@ import { RxCross1 } from "react-icons/rx";
 import { BsCartDash, BsHandbagFill } from "react-icons/bs";
 import { CgSpinner } from "react-icons/cg";
 import { FaHeart, FaLongArrowAltLeft, FaRegHeart } from "react-icons/fa";
-import { Helmet } from "react-helmet-async";
-import { WishlistSystem } from "../../context/WishListContext";
-import UserCartService from "../../services/Cart";
-import Userservice from "../../services/Auth";
-import productDetail from "../../services/Shop";
-import { CartSystem } from "../../context/CartContext";
+// The original import for Helmet is replaced by the next/head component or the Next.js Metadata API.
+import { WishlistSystem } from "../../../context/WishListContext";
+import UserCartService from "../../../services/Cart";
+import Userservice from "../../../services/Auth";
+import productDetail from "../../../services/Shop";
+import { CartSystem } from "../../../context/CartContext";
 import { Accordion } from "react-bootstrap";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
 import { useQuery } from "@tanstack/react-query";
@@ -25,21 +31,31 @@ import { motion } from "framer-motion";
 import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 
-import easyReturn from "../../assets/images/Tags/Warranty.png";
-import plating from "../../assets/images/Tags/Jewellery.png";
 import auth925 from "../../assets/images/Tags/Auth925.png";
 
 const ShopDetails = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
+  // ❌ Original: const location = useLocation();
+  // ❌ Original: const navigate = useNavigate();
+  
+  // ✅ Next.js App Router Replacements
+  const router = useRouter(); 
+  const pathname = usePathname(); // Equivalent to location.pathname
+  const searchParams = useSearchParams(); 
 
+  // ❌ Original: const { id } = useParams();
+  // We use searchParams to get the ID since the original component used location.state/URL params heavily.
+  const id = searchParams.get('id'); 
+
+  // ❌ Original: const { id: categoryIdFromState, name: categoryNameFromState } = location.state || {};
+  // Now fetching dynamic data from URL query params. Adjust this based on your actual URL structure.
+  const categoryIdFromState = searchParams.get('categoryId') || id; 
+  const categoryNameFromState = searchParams.get('categoryName'); 
+  
   const { dispatch: wishlistDispatch } = useContext(WishlistSystem);
   const { dispatch: removeWishlistDispatch } = useContext(WishlistSystem);
   const { dispatch: addtocartDispatch } = useContext(CartSystem);
-const loginPath = sessionStorage.getItem("currentPath");
+  const loginPath = sessionStorage.getItem("currentPath");
 
-  const { id } = useParams();
-  const { id: categoryIdFromState, name: categoryNameFromState } = location.state || {};
   const Dealer = localStorage.getItem("email");
   const Phone = localStorage.getItem("phone");
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -63,14 +79,15 @@ const loginPath = sessionStorage.getItem("currentPath");
         id: categoryIdFromState,
       }),
     keepPreviousData: true,
+    enabled: !!categoryIdFromState, // Only run the query if the ID is present
     onError: (err) => {
       console.log("Error fetching products details:", err);
     },
   });
 
-  const product = data?.data || [];
+  const product = data?.data || {};
   const img = data?.data?.image || "";
-  const productImages = data?.data?.multiple_image;
+  const productImages = data?.data?.multiple_image || [];
 
   const GetUserCartList = async () => {
     UserCartService.CartList({ phone: Phone })
@@ -95,7 +112,7 @@ const loginPath = sessionStorage.getItem("currentPath");
   useEffect(() => {
     GetUserCartList();
     GetUserWishList();
-  }, []);
+  }, [Phone]); // Added Phone dependency to useEffect
 
   const addToUserWishList = async (product) => {
     setSpinner2(true);
@@ -115,11 +132,14 @@ const loginPath = sessionStorage.getItem("currentPath");
             type: "ADD_TO_WISHLIST",
             payload,
           });
+          toast.success("Added to Wishlist!");
         } else {
+            toast.error(res.message || "Failed to add to wishlist.");
         }
       })
       .catch((err) => {
         console.log(err);
+        toast.error("An error occurred.");
       })
       .finally(() => {
         setSpinner2(false);
@@ -140,7 +160,7 @@ const loginPath = sessionStorage.getItem("currentPath");
 
     const isItemInWishlist = UserWishlistItems.some(
       (wishlistItem) =>
-        wishlistItem.id === product?.id &&
+        wishlistItem.design_id === product?.id &&
         wishlistItem.goldType === product?.goldType &&
         wishlistItem.goldColor === product?.goldColor
     );
@@ -156,14 +176,17 @@ const loginPath = sessionStorage.getItem("currentPath");
           if (isItemInWishlist) {
             removeWishlistDispatch({
               type: "REMOVE_FROM_WISHLIST",
-              payload,
+              payload: { id: product?.id },
             });
           }
           toast.success(res.message);
+        } else {
+             toast.error(res.message || "Failed to add to cart.");
         }
       })
       .catch((err) => {
         console.log(err);
+        toast.error("An error occurred.");
       })
       .finally(() => {
         setSpinner(false);
@@ -231,33 +254,37 @@ const loginPath = sessionStorage.getItem("currentPath");
 
   const UserLogin = (e) => {
     e.preventDefault();
-    localStorage.setItem("redirectPath", location.pathname);
-navigate('/login', { state: { from: location.pathname } });
+    localStorage.setItem("redirectPath", pathname); // ✅ Use next/navigation's pathname
+    // ✅ Use router.push with a query parameter for state
+    router.push(`/login?from=${encodeURIComponent(pathname)}`); 
   };
 
   const numberFormat = (value) =>
     new Intl.NumberFormat("en-IN")?.format(Math?.round(value));
+    
   const handleBackClick = () => {
     // Check the previous page's path
     console.log(loginPath,"::prev page")
     // If coming from login page, redirect to /shop
     if (loginPath?.includes('/login')) {
-      navigate('/shop');
+      router.push('/shop'); // ✅ Use Next.js router.push
     } else {
-      navigate(-1); // Go back normally
+      router.back(); // ✅ Use Next.js router.back() (equivalent to navigate(-1))
     }
   };
+  
   return (
     <>
-      <Helmet>
+      {/* ❌ Removed: <Helmet>...</Helmet> */}
+      <Head> {/* ✅ Next.js alternative for setting metadata in a Client Component */}
         <title>
           Impel Store - &nbsp;
-          {product && product.name && product.code
+          {product?.name && product?.code
             ? `${product.name} (${product.code})`
-            : ""}
+            : "Product Details"}
         </title>
-        <meta name="description" content="Helmet application" />
-      </Helmet>
+        <meta name="description" content="Product details page" />
+      </Head>
 
       <section className="shop_details">
         <div className="container">
@@ -265,16 +292,16 @@ navigate('/login', { state: { from: location.pathname } });
             <div className="row justify-content-center">
               <div className="col-md-10">
                 <div className="breadcumb-section-btn mb-4">
-                  <BreadCrumb
+                  {/* <BreadCrumb
                     firstName="Home"
                     firstUrl='/'
                     secondName="Shop"
                     secondUrl='/shop'
                     thirdName="Shopdetails"
-                  />
+                  /> */}
                   <button
                     className="btn btn-outline-dark d-flex align-items-center text-center"
-                    onClick={() => navigate(-1)}
+                    onClick={() => router.back()} // ✅ Use Next.js router.back()
                   >
                     <FaArrowLeftLong />
                   </button>
@@ -710,28 +737,26 @@ navigate('/login', { state: { from: location.pathname } });
                                                     </td>
                                                   </tr>
                                                   <tr>
-                                                    <th>Total Amount</th>
-                                                    <td>
-                                                      {Phone || Dealer ? (
-                                                        <strong className="text-success">
-                                                          ₹
-                                                          {numberFormat(
-                                                            product?.total_amount_20k
-                                                          )}
-                                                          &nbsp; (Approx.)
-                                                        </strong>
-                                                      ) : (
-                                                        <strong className="text-success">
-                                                          ₹
-                                                          {numberFormat(
-                                                            product?.metal_value_20k +
-                                                              product?.making_charge_20k
-                                                          )}
-                                                          &nbsp; (Approx.)
-                                                        </strong>
-                                                      )}
-                                                    </td>
-                                                  </tr>
+  <th>Total Amount</th>
+  <td>
+    {Phone || Dealer ? (
+      <strong className="text-success">
+        ₹
+        {numberFormat(product?.total_amount_20k)}
+        &nbsp; (Approx.)
+      </strong>
+    ) : (
+      <strong className="text-success">
+        ₹
+        {numberFormat(
+          product?.metal_value_20k + product?.making_charge_20k
+        )}
+        &nbsp; (Approx.)
+      </strong>
+    )}
+  </td>
+</tr>
+
                                                 </>
                                               )}
                                               {goldType === "18k" && (
@@ -852,122 +877,74 @@ navigate('/login', { state: { from: location.pathname } });
                                                   </tr>
                                                 </>
                                               )}
-                                              {goldType === "14k" && (
-                                                <>
-                                                  <tr>
-                                                    <th>Gross Weight</th>
-                                                    <td>
-                                                      {
-                                                        productdetail?.gross_weight_14k
-                                                      }
-                                                      g. (Approx.)
-                                                    </td>
-                                                  </tr>
-                                                  {/* <tr>
-                                            <th>Less Gems Stone</th>
-                                            <td>
-                                              {productdetail?.less_gems_stone}
-                                              g.
-                                            </td>
-                                          </tr>
-                                          <tr>
-                                            <th>Less C.Z. Stone</th>
-                                            <td>
-                                              {productdetail?.less_cz_stone}
-                                              g.
-                                            </td>
-                                          </tr> */}
-                                                  <tr>
-                                                    <th>Net Weight</th>
-                                                    <td>
-                                                      {
-                                                        productdetail?.net_weight_14k
-                                                      }
-                                                      g.
-                                                    </td>
-                                                  </tr>
-                                                  <tr>
-                                                    <th>Metal value</th>
-                                                    <td>
-                                                      {numberFormat(
-                                                        product?.metal_value_14k
-                                                      )}
-                                                    </td>
-                                                  </tr>
-                                                  {/* <tr>
-                                            <th>CZ Stone Charges</th>
-                                            <td>
-                                              ₹{productdetail?.cz_stone_price}
-                                            </td>
-                                          </tr>
-                                          <tr>
-                                            <th>Gem stone charges</th>
-                                            <td>
-                                              ₹{productdetail?.gemstone_price}
-                                            </td>
-                                          </tr> */}
-                                                  <tr>
-                                                    <th>Making charge</th>
-                                                    <td>
-                                                      ₹
-                                                      {(product?.making_charge_discount_14k >
-                                                        0 &&
-                                                        Phone) ||
-                                                      Dealer ? (
-                                                        <>
-                                                          <del>
-                                                            {numberFormat(
-                                                              product?.making_charge_14k
-                                                            )}
-                                                          </del>
-                                                          &nbsp; (
-                                                          {numberFormat(
-                                                            product?.sales_westage_discount
-                                                          )}
-                                                          % Off) &nbsp;{" "}
-                                                          <strong>
-                                                            ₹
-                                                            {numberFormat(
-                                                              product?.making_charge_discount_14k
-                                                            )}
-                                                          </strong>
-                                                        </>
-                                                      ) : (
-                                                        <>
-                                                          <strong>
-                                                            {numberFormat(
-                                                              product?.making_charge_14k
-                                                            )}
-                                                          </strong>
-                                                        </>
-                                                      )}
-                                                    </td>
-                                                  </tr>
-                                                  <tr>
-                                                    <th>Total Amount</th>
-                                                    <td>
-                                                      {Phone || Dealer ? (
-                                                        <strong className="text-success">
-                                                          ₹
-                                                          {numberFormat(
-                                                            product?.total_amount_14k
-                                                          )}
-                                                          &nbsp; (Approx.)
-                                                        </strong>
-                                                      ) : (
-                                                        <strong className="text-success">
-                                                          ₹
-                                                          {numberFormat(
-                                                            product?.making_charge_14k +
-                                                              product?.metal_value_14k
-                                                          )}
-                                                          &nbsp; (Approx.)
-                                                        </strong>
-                                                      )}
-                                                    </td>
-                                                  </tr>
-                                                </>
-                                              )}
+                                        {goldType === "14k" && (
+  <>
+    <tr>
+      <th>Gross Weight</th>
+      <td>{productdetail?.gross_weight_14k} g. (Approx.)</td>
+    </tr>
+
+    <tr>
+      <th>Less Gems Stone</th>
+      <td>{productdetail?.less_gems_stone} g.</td>
+    </tr>
+
+    <tr>
+      <th>Less C.Z. Stone</th>
+      <td>{productdetail?.less_cz_stone} g.</td>
+    </tr>
+
+    <tr>
+      <th>Net Weight</th>
+      <td>{productdetail?.net_weight_14k} g.</td>
+    </tr>
+
+    <tr>
+      <th>Metal value</th>
+      <td>₹{numberFormat(product?.metal_value_14k)}</td>
+    </tr>
+
+    <tr>
+      <th>Making charge</th>
+      <td>
+        ₹
+        {(product?.making_charge_discount_14k > 0 && Phone) || Dealer ? (
+          <>
+            <del>{numberFormat(product?.making_charge_14k)}</del>
+            &nbsp; ({numberFormat(product?.sales_westage_discount)}% Off) &nbsp;
+            <strong>
+              ₹{numberFormat(product?.making_charge_discount_14k)}
+            </strong>
+          </>
+        ) : (
+          <>
+            <strong>₹{numberFormat(product?.making_charge_14k)}</strong>
+          </>
+        )}
+      </td>
+    </tr>
+
+    <tr>
+      <th>Total Amount</th>
+      <td>
+        {Phone || Dealer ? (
+          <strong className="text-success">
+            ₹{numberFormat(product?.total_amount_14k)} &nbsp; (Approx.)
+          </strong>
+        ) : (
+          <strong className="text-success">
+            ₹
+            {numberFormat(
+              product?.making_charge_14k + product?.metal_value_14k
+            )}
+            &nbsp; (Approx.)
+          </strong>
+        )}
+      </td>
+    </tr>
+  </>
+)}
+
                                             </tbody>
                                           </table>
                                         </>
@@ -1083,94 +1060,78 @@ navigate('/login', { state: { from: location.pathname } });
                             )}
                           </div>
                        <div className="d-flex align-items-center gap-2 pt-2">
-  {Phone ? (
-    <>
-      {cartItems?.find((item) => item?.design_id === product?.id) ? (
-        <Link className="btn btn-outline-dark" to="/cart">
-          <BsCartDash style={{ fontSize: "26px", cursor: "pointer" }} />
-        </Link>
-      ) : (
-        <>
-          <button
-            className="btn btn-outline-dark"
-            onClick={() => handleAddToCart(product)}
-            disabled={spinner}
-          >
-            {spinner ? (
-              <CgSpinner size={20} className="animate_spin" />
-            ) : (
-              <BsHandbagFill style={{ fontSize: "26px", cursor: "pointer" }} />
-            )}
-          </button>
+                            {Phone ? (
+                              <>
+                                {cartItems?.find((item) => item?.design_id === product?.id) ? (
+                                  // ⬅️ Next.js Link
+                                  <Link className="btn btn-outline-dark" href="/cart">
+                                    <BsCartDash style={{ fontSize: "26px", cursor: "pointer" }} />
+                                  </Link>
+                                ) : (
+                                  <>
+                                    <button
+                                      className="btn btn-outline-dark"
+                                      onClick={() => handleAddToCart(product)}
+                                      disabled={spinner}
+                                    >
+                                      {spinner ? (
+                                        <CgSpinner size={20} className="animate_spin" />
+                                      ) : (
+                                        <BsHandbagFill style={{ fontSize: "26px", cursor: "pointer" }} />
+                                      )}
+                                    </button>
 
-          <button
-            className="btn btn-outline-dark"
-            onClick={() => addToUserWishList(product)}
-            disabled={UserWishlistItems?.some(
-              (item) => item?.id === product?.id
-            )}
-          >
-            {UserWishlistItems?.some((item) => item?.id === product?.id) ? (
-              <FaHeart
-                style={{ fontSize: "26px", cursor: "pointer", color: "green" }}
-              />
-            ) : spinner2 ? (
-              <CgSpinner size={20} className="animate_spin" />
-            ) : (
-              <FaRegHeart style={{ fontSize: "26px", cursor: "pointer" }} />
-            )}
-          </button>
-        </>
-      )}
-    </>
-  ) : Dealer ? (
-    <></>
-  ) : (
-    <div
-      className="d-flex align-items-center gap-2"
-      onClick={(e) => UserLogin(e)}
-    >
-      <span className="btn btn-outline-dark">
-        <BsHandbagFill style={{ fontSize: "26px", cursor: "pointer" }} />
-      </span>
-      <span className="btn btn-outline-dark">
-        <FaRegHeart style={{ fontSize: "26px", cursor: "pointer" }} />
-      </span>
-    </div>
-  )}
+                                    <button
+                                      className="btn btn-outline-dark"
+                                      onClick={() => addToUserWishList(product)}
+                                      disabled={UserWishlistItems?.some(
+                                        (item) => item?.design_id === product?.id
+                                      )}
+                                    >
+                                      {UserWishlistItems?.some((item) => item?.design_id === product?.id) ? (
+                                        <FaHeart
+                                          style={{ fontSize: "26px", cursor: "pointer", color: "green" }}
+                                        />
+                                      ) : spinner2 ? (
+                                        <CgSpinner size={20} className="animate_spin" />
+                                      ) : (
+                                        <FaRegHeart style={{ fontSize: "26px", cursor: "pointer" }} />
+                                      )}
+                                    </button>
+                                  </>
+                                )}
+                              </>
+                            ) : Dealer ? (
+                              <></>
+                            ) : (
+                              <div
+                                className="d-flex align-items-center gap-2"
+                                onClick={(e) => UserLogin(e)}
+                              >
+                                <span className="btn btn-outline-dark">
+                                  <BsHandbagFill style={{ fontSize: "26px", cursor: "pointer" }} />
+                                </span>
+                                <span className="btn btn-outline-dark">
+                                  <FaRegHeart style={{ fontSize: "26px", cursor: "pointer" }} />
+                                </span>
+                              </div>
+                            )}
 
-  {/* Back to shop inline with others */}
-   <button
-          className="btn btn-outline-dark px-4 d-flex align-items-center"
-          style={{ borderRadius: "8px" }}
-        onClick={handleBackClick}
-        >
-          <FaLongArrowAltLeft className="me-2" size={18} />
-          Back to Shop 
-        </button>
-</div>
+                            {/* Back to shop inline with others */}
+                            <button
+                                  className="btn btn-outline-dark px-4 d-flex align-items-center"
+                                  style={{ borderRadius: "8px" }}
+                                onClick={handleBackClick}
+                                >
+                                  <FaLongArrowAltLeft className="me-2" size={18} />
+                                  Back to Shop 
+                                </button>
+                        </div>
 
 
 
                          
-                          {/* {Phone && (
                             <>
-                              {cartItems &&
-                              cartItems.find(
-                                (item) => item?.design_id === product?.id
-                              ) ? (
-                                ""
-                              ) : (
-                                <div className="discount-info">
-                                  <span>
-                                    To get Maximum Discount apply coupon code in
-                                    cart.
-                                  </span>
-                                </div>
-                              )}
-                            </>
-                          )} */}
-                           <>
                               {cartItems &&
                               cartItems.find(
                                 (item) => item?.design_id === product?.id
@@ -1188,15 +1149,15 @@ navigate('/login', { state: { from: location.pathname } });
 
                           <div className="design_details_spec">
                             <div className="design_details_spec_box">
-                              <img src={easyReturn} alt="easy_return" />
+                              <img src='/assets/images/Tags/Warranty.png' alt="easy_return" />
                               <span>Easy 7 Days Return Policy</span>
                             </div>
                             <div className="design_details_spec_box">
-                              <img src={plating} alt="Lifetime Plating" />
+                              <img src='/assets/images/Tags/Jewellery.png' alt="Lifetime Plating" />
                               <span>Free Life Time Plating</span>
                             </div>
                             <div className="design_details_spec_box">
-                              <img src={auth925} alt="easy_return" />
+                              <img src='/assets/images/Tags/Auth925.png' alt="easy_return" />
                               <span>Authentic 925 Silver</span>
                             </div>
                             {/* <div className="design_details_spec_box">

@@ -1,37 +1,35 @@
+'use client';
 import React, { useContext, useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
-import Loader from "../../components/common/Loader";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import Head from "next/head";
+import Loader from "../components/common/Loader";
+import Link from "next/link";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { FaLongArrowAltLeft } from "react-icons/fa";
 import { MdDelete } from "react-icons/md";
-import emptycart from "../../assets/images/empty-cart.png";
-import noImage from "../../assets/images/No_Image_Available.jpg";
 import axios from "axios";
 import { CgSpinner } from "react-icons/cg";
 import toast from "react-hot-toast";
-import { ReadyDesignCartSystem } from "../../context/ReadyDesignCartContext";
-import UserService from "../../services/Cart";
+import { ReadyDesignCartSystem } from "../context/ReadyDesignCartContext";
+import UserService from "../services/Cart";
 import Dropdown from "react-dropdown";
 import "react-dropdown/style.css";
 import { Col, Form, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
-import profileService from "../../services/Auth";
-import { ProfileSystem } from "../../context/ProfileContext";
+import profileService from "../services/Auth";
+import { ProfileSystem } from "../context/ProfileContext";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 
-const api = process.env.REACT_APP_API_KEY;
+const api = process.env.NEXT_PUBLIC_API_KEY;
 
 const ReadyDesignCart = () => {
-  const user_id = localStorage.getItem("user_id");
-  const Verification = localStorage.getItem("verification");
-
-  const location = useLocation();
-  const navigate = useNavigate();
-  const phone = localStorage.getItem("phone");
-  const { dispatch: removeFromCartDispatch } = useContext(
-    ReadyDesignCartSystem
-  );
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const user_id = typeof window !== "undefined" ? localStorage.getItem("user_id") : "";
+  const Verification = typeof window !== "undefined" ? localStorage.getItem("verification") : "";
+  const phone = typeof window !== "undefined" ? localStorage.getItem("phone") : "";
+  const { dispatch: removeFromCartDispatch } = useContext(ReadyDesignCartSystem as any);
 
   const [isLoading, setIsLoading] = useState(true);
   const [Items, setItems] = useState([]);
@@ -533,15 +531,14 @@ const ReadyDesignCart = () => {
                 })
                 .then((res) => {
                   if (res.data.status === true) {
-                    navigate(`/ready-order-details/?${res?.data?.data}`);
-                    // navigate(`/ready-order-details/${res?.data?.data}`);
+                    router.push(`/ready-order-details/?${res?.data?.data}`);
                     resetcartcount({ type: "RESET_CART" });
                     toast.success(res.data.message);
                     localStorage.removeItem("dealerDiscount");
                     localStorage.removeItem("dealermessage");
                   } else {
                     toast.error(res.data.message);
-                    navigate("/");
+                    router.push("/");
                   }
                   setIsLoading(false);
                 })
@@ -564,8 +561,8 @@ const ReadyDesignCart = () => {
 
   useEffect(() => {
     const processOrder = async () => {
-      if (location.pathname === "/ready-processing-order" && Items.length > 0) {
-        const queryParams = new URLSearchParams(location.search);
+      if (pathname === "/ready-processing-order" && Items.length > 0) {
+        const queryParams = new URLSearchParams(searchParams.toString());
         const transaction_id = queryParams.get("transaction_id");
         
         // If we've already processed this transaction, don't do it again
@@ -640,11 +637,11 @@ const ReadyDesignCart = () => {
               localStorage.removeItem("dealermessage");
               
               setTimeout(() => {
-                navigate(`/ready-order-details/?${orderRes?.data?.data}`);
+                router.push(`/ready-order-details/?${orderRes?.data?.data}`);
               }, 1000);
             } else {
               toast.error(orderRes.data.message);
-              navigate("/");
+              router.push("/");
             }
           }
         } catch (err) {
@@ -657,7 +654,7 @@ const ReadyDesignCart = () => {
     };
 
     processOrder();
-  }, [location.pathname, location.search]);
+  }, [pathname, searchParams]);
 
   const handleClose = () => {
     setShowEdit(false);
@@ -1074,11 +1071,11 @@ const SubTotalAfterDiscount = () => {
 console.log("helooooo")
   return (
     <>
-      <Helmet>
+      <Head>
         <title>Impel Store - Ready products cart</title>
-      </Helmet>
+      </Head>
 
-     {location.pathname === "/ready-processing-order" ? (
+     {pathname === "/ready-processing-order" ? (
   isLoading ? (
     <Loader />
   ) : (
@@ -1117,19 +1114,14 @@ console.log("helooooo")
                                         <div className="col-md-3" key={index}>
                                           <div className="d-flex">
                                             <Link
-                                              to={`/ready-to-dispatch/${4}/${
+                                              href={`/ready-to-dispatch/${4}/${
                                                 data?.tag_no
                                               }`}
                                               className="nav-link"
                                             >
                                               <img
                                                 src={`https://api.indianjewelcast.com/TagImage/${data?.barcode}.jpg`}
-                                                onError={(e) => {
-                                                  e.target.onerror = null;
-                                                  e.target.src =
-                                                    noImage?.No_Image_Available ||
-                                                    "https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg";
-                                                }}
+                                               
                                                 className="border rounded me-3 w-100 p-2"
                                                 alt=""
                                               />
@@ -1463,7 +1455,7 @@ console.log("helooooo")
 
                             <div className="text-center my-4">
                               <img
-                                src={emptycart}
+                                src='/assets/images/empty-cart.png'
                                 alt="Empty Cart Illustration"
                                 className="img-fluid mb-3"
                                 style={{ maxWidth: "200px" }}

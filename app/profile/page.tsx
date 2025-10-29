@@ -1,17 +1,18 @@
+'use client';
 import React, { useContext, useEffect, useState } from "react";
 import { Col, Form, Modal } from "react-bootstrap";
 import toast from "react-hot-toast";
-import profileService from "../../services/Auth";
-import { Helmet } from "react-helmet-async";
+import profileService from "../services/Auth";
+import Head from "next/head";
 import { FaPencilAlt } from "react-icons/fa";
 import { CgSpinner } from "react-icons/cg";
-import { ProfileSystem } from "../../context/ProfileContext";
-import Loader from "../../components/common/Loader";
+import { ProfileSystem } from "../context/ProfileContext";
+import Loader from "../components/common/Loader";
 
 const Profile = () => {
-  const { dispatch: profilename, state: namestate } = useContext(ProfileSystem);
-  const { dispatch: image, state: imagestate } = useContext(ProfileSystem);
-  const phone = localStorage.getItem("phone");
+  const { dispatch: profilename, state: namestate } = useContext(ProfileSystem as any);
+  const { dispatch: image, state: imagestate } = useContext(ProfileSystem as any);
+  const phone = typeof window !== "undefined" ? localStorage.getItem("phone") : "";
   const [showEdit, setShowEdit] = useState(false);
   const [selectedData, setSelectedData] = useState([]);
   const [profileData, setProfileData] = useState([]);
@@ -57,43 +58,31 @@ const Profile = () => {
     setShowEdit(false);
   };
 
-  const handleImageChange = (e) => {
-    const fileInput = document.getElementById("upload");
-    const file = e.target.files[0];
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fileInput = document.getElementById("upload") as HTMLInputElement | null;
+    const file = e.target.files?.[0];
     const maxSize = 5 * 1024 * 1024;
-
-    if (file?.size > maxSize) {
+    if (file?.size && file.size > maxSize) {
       toast.error("File size exceeds the 5 MB limit");
-      fileInput.value = "";
+      if (fileInput) fileInput.value = "";
       return;
     }
-
     const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error(
-        "Invalid file type. Please upload a PNG, JPEG, JPG, or GIF file."
-      );
-      fileInput.value = "";
+    if (file && !allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Please upload a PNG, JPEG, JPG, or GIF file.");
+      if (fileInput) fileInput.value = "";
       return;
     }
-
     const reader = new FileReader();
-
-    const myFormData = new FormData(
-      document.getElementById("user-profile-form")
-    );
-
+    const myFormData = new FormData(document.getElementById("user-profile-form") as HTMLFormElement);
     reader.onloadend = () => {
       setIsLoading(true);
       profileService
         .UserProfileImage(myFormData)
-        .then((res) => {
+        .then((res: any) => {
           if (res.status === true) {
             getProfile();
-            image({
-              type: "SET_IMAGE",
-              payload: { image: !imagestate?.image },
-            });
+            image({ type: "SET_IMAGE", payload: { image: !imagestate?.image } });
             toast.success(res.message);
           } else {
             getProfile();
@@ -101,7 +90,7 @@ const Profile = () => {
             setIsLoading(false);
           }
         })
-        .catch((error) => {
+        .catch((error: any) => {
           console.log(error);
         });
     };
@@ -111,106 +100,104 @@ const Profile = () => {
     }
   };
 
- const handleCheckboxChange = (event) => {
-  setIsChecked(event.target.checked);
-
-  if (event.target.checked) {
-    const updatedUserData = {
-      ...userData,
-      shipping_address: userData.address,
-      shipping_pincode: userData.pincode,
-      shipping_state: userData.state,
-      shipping_city: userData.city,
-    };
-    
-    setUserData(updatedUserData);
-    
-    // Fetch shipping cities for the selected state
-    if (userData.state) {
-      fetchShippingCity(userData.state);
-    }
-  } else {
-    setUserData({
-      ...userData,
-      shipping_address: "",
-      shipping_pincode: "",
-      shipping_state: "",
-      shipping_city: "",
-    });
-  }
-};
-  // user profile display function
- const getProfile = async () => {
-  await profileService
-    .getProfile({ phone: phone })
-    .then((res) => {
-      const Billing_shipping_state = res.data.state.name;
-      const Billing_shipping_city = res.data.city.name;
-      const shipping_state_name = res.data.shipping_state.name;
-      const shipping_city_name = res.data.shipping_city.name;
-      
-      setProfileData({
-        ...res.data,
-        state_name: Billing_shipping_state,
-        city_name: Billing_shipping_city,
-        shipping_state_name: shipping_state_name,
-        shipping_city_name: shipping_city_name,
-        state: res.data.state.id,        // State ID
-        city: res.data.city.id,           // City ID
-        shipping_state: res.data.shipping_state.id,  // Shipping state ID
-        shipping_city: res.data.shipping_city.id,    // Shipping city ID
-      });
-      
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setIsChecked(event.target.checked);
+    if (event.target.checked) {
+      const updatedUserData = {
+        ...userData,
+        shipping_address: userData.address,
+        shipping_pincode: userData.pincode,
+        shipping_state: userData.state,
+        shipping_city: userData.city,
+      };
+      setUserData(updatedUserData);
+      if (userData.state) {
+        fetchShippingCity(userData.state);
+      }
+    } else {
       setUserData({
-        ...res.data,
-        state_name: Billing_shipping_state,
-        city_name: Billing_shipping_city,
-        shipping_state_name: shipping_state_name,
-        shipping_city_name: shipping_city_name,
-        state: res.data.state.id,        // State ID
-        city: res.data.city.id,           // City ID
-        shipping_state: res.data.shipping_state.id,  // Shipping state ID
-        shipping_city: res.data.shipping_city.id,    // Shipping city ID
+        ...userData,
+        shipping_address: "",
+        shipping_pincode: "",
+        shipping_state: "",
+        shipping_city: "",
       });
-      
-      res.data.state.id && fetchCity(res.data.state.id);
-      res.data.shipping_state.id &&
-        fetchShippingCity(res.data.shipping_state.id);
-      setIsLoading(false);
-    })
-    .catch((err) => {
-      console.log(err);
-      setIsLoading(false);
-    });
-};
-useEffect(() => {
-  if (userData.shipping_state) {
-    fetchShippingCity(userData.shipping_state);
-  }
-}, [userData.shipping_state]);
-  const fetchCity = async (stateId) => {
+    }
+  };
+
+  const getProfile = async () => {
+    await profileService
+      .getProfile({ phone: phone })
+      .then((res: any) => {
+        const Billing_shipping_state = res.data.state.name;
+        const Billing_shipping_city = res.data.city.name;
+        const shipping_state_name = res.data.shipping_state.name;
+        const shipping_city_name = res.data.shipping_city.name;
+        
+        setProfileData({
+          ...res.data,
+          state_name: Billing_shipping_state,
+          city_name: Billing_shipping_city,
+          shipping_state_name: shipping_state_name,
+          shipping_city_name: shipping_city_name,
+          state: res.data.state.id,        // State ID
+          city: res.data.city.id,           // City ID
+          shipping_state: res.data.shipping_state.id,  // Shipping state ID
+          shipping_city: res.data.shipping_city.id,    // Shipping city ID
+        });
+        
+        setUserData({
+          ...res.data,
+          state_name: Billing_shipping_state,
+          city_name: Billing_shipping_city,
+          shipping_state_name: shipping_state_name,
+          shipping_city_name: shipping_city_name,
+          state: res.data.state.id,        // State ID
+          city: res.data.city.id,           // City ID
+          shipping_state: res.data.shipping_state.id,  // Shipping state ID
+          shipping_city: res.data.shipping_city.id,    // Shipping city ID
+        });
+        
+        res.data.state.id && fetchCity(res.data.state.id);
+        res.data.shipping_state.id &&
+          fetchShippingCity(res.data.shipping_state.id);
+        setIsLoading(false);
+      })
+      .catch((err: any) => {
+        console.log(err);
+        setIsLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    if (userData.shipping_state) {
+      fetchShippingCity(userData.shipping_state);
+    }
+  }, [userData.shipping_state]);
+
+  const fetchCity = async (stateId: string | number) => {
     await profileService
       .getCity({ state_id: stateId })
-      .then((res) => {
+      .then((res: any) => {
         setcity(res.data);
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.log(err);
       });
   };
 
-  const fetchShippingCity = async (cityId) => {
+  const fetchShippingCity = async (cityId: string | number) => {
     await profileService
       .getCity({ state_id: cityId })
-      .then((res) => {
+      .then((res: any) => {
         setShipping_city(res.data);
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.log(err);
       });
   };
 
-  const handleEditChange = (e) => {
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     if (name === "pan_no" && value.length > 10) {
@@ -237,13 +224,13 @@ useEffect(() => {
     }
   };
 
-  const handleEdit = async (data) => {
+  const handleEdit = async (data: any) => {
     setShowEdit(true);
     setSelectedData(data);
   };
 
   const pincodeRegex = /^\d{6}$/;
-  const isValidPan = (panNumber) => {
+  const isValidPan = (panNumber: string) => {
     const panRegex = /[A-Z]{5}[0-9]{4}[A-Z]{1}/;
     return panRegex.test(panNumber);
   };
@@ -358,7 +345,7 @@ useEffect(() => {
     return isValid;
   };
 
-  const handleUpdate = async (e) => {
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const isFormValid = validateForm();
     if (isFormValid) {
@@ -432,9 +419,9 @@ useEffect(() => {
 
   return (
     <>
-      <Helmet>
+      <Head>
         <title>Impel Store - Profile</title>
-      </Helmet>
+      </Head>
       <section className="profile user_profile_view">
         <div>
           <div className="container">

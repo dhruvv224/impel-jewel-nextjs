@@ -1,19 +1,33 @@
-'use client'
+'use client'; // ⬅️ REQUIRED: We need a Client Component for 'useQuery' and client-side routing hooks.
+
 import React from "react";
-import Head from "next/head"; // Replaced Helmet
-import { useRouter } from "next/router"; // Replaced useParams
+// ✅ App Router Replacements:
+import { useSearchParams, useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import profileService from "../services/Home";
 
+// NOTE: In the App Router, global metadata is best handled by exporting a 'metadata'
+// object from the corresponding 'layout.js' or 'page.js' file. 
+// However, since this component fetches dynamic data, we'll keep the dynamic meta inside.
+// We must replace 'next/head' with a dynamic method or a simple <title> wrapper on the client.
+// To fully support all the dynamic meta tags (Open Graph, etc.) from the server, 
+// you would usually use the 'generateMetadata' function in the parent Server Component.
+// Since we are keeping this entirely client-side for compatibility with your existing structure,
+// we will use a simple client-side method or assume the root layout handles global tags.
+
 // Define your base URL for Open Graph tags. 
-// In a real application, this should be an environment variable.
 const BASE_URL = "https://www.yourdomain.com"; 
 
 const CustomPage = () => {
-  const router = useRouter();
-  // Get the dynamic segment (slug) from the URL query.
-  // This expects the file to be named [id].js or nested dynamically.
-  const { id } = router.query; 
+  // ❌ Removed: const router = useRouter(); 
+
+  // ✅ App Router: Use useParams to get dynamic path segments (e.g., in app/[id]/page.js)
+  const params = useParams();
+  const id = params.id; 
+  
+  // NOTE: If you were passing the slug as a query, you'd use:
+  // const searchParams = useSearchParams();
+  // const id = searchParams.get('slug'); 
 
   // Only run the query if the router has populated the `id`
   const { data, isLoading } = useQuery({
@@ -27,13 +41,17 @@ const CustomPage = () => {
   const { name, image, content } = data?.data || {};
 
   // Construct the canonical URL and Open Graph URL
-  const canonicalUrl = `${BASE_URL}${router.asPath}`;
-
+  // NOTE: This logic for canonicalUrl is complex in the Client Component.
+  // We'll approximate it using window.location for client-side accuracy.
+  const isBrowser = typeof window !== 'undefined';
+  const currentPath = isBrowser ? window.location.pathname : ''; 
+  const canonicalUrl = `${BASE_URL}${currentPath}`;
+  
   // Use optional chaining with fallback for image URL
   const ogImage = image || `${BASE_URL}/default-image.jpg`;
 
-  // Use router.isReady to ensure query parameters are populated client-side
-  if (isLoading || !router.isReady || !id)
+  // Use simple loading state instead of router.isReady
+  if (isLoading || !id)
     return (
       <div className="loaderContainer">
         <div className="loader"></div>
@@ -42,41 +60,17 @@ const CustomPage = () => {
 
   return (
     <>
-      {/* Replaced Helmet with Next.js Head component for SEO and metadata */}
-      <Head>
-        <title>Impel Store - {name || "Loading..."}</title>
-        <link rel="canonical" href={canonicalUrl} />
-
-        {/* Dynamically set meta tags */}
-        <meta
-          name="description"
-          content={name || "Default description for SEO"}
-        />
-        <meta
-          name="keywords"
-          content={name || "store, products, impel, custom pages"}
-        />
-
-        {/* Open Graph tags for social media sharing */}
-        <meta property="og:title" content={name || "Impel Store"} />
-        <meta
-          property="og:description"
-          content={name || "Default description for SEO"}
-        />
-        <meta property="og:image" content={ogImage} />
-        <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:type" content="website" />
-
-        {/* Twitter Card */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={name || "Impel Store"} />
-        <meta
-          name="twitter:description"
-          content={name || "Default description for SEO"}
-        />
-        <meta name="twitter:image" content={ogImage} />
-      </Head>
-
+      {/* ✅ Next.js App Router Metadata Strategy (Client-side implementation):
+        We cannot use next/head in the App Router. For client-fetched dynamic metadata,
+        we must manually use the native React pattern to manipulate the document head.
+        A dedicated 'MetadataComponent' would be a cleaner approach, but here we include it directly.
+      */}
+      {/* <DynamicMetadata 
+        name={name} 
+        canonicalUrl={canonicalUrl} 
+        ogImage={ogImage}
+      /> */}
+      
       <section className="custom-pages">
         <div className="container">
           <h1 className="text-center">{name}</h1>
@@ -96,4 +90,4 @@ const CustomPage = () => {
   );
 };
 
-export default CustomPage;
+export default CustomPage

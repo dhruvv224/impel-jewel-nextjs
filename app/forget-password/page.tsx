@@ -1,10 +1,15 @@
+"use client"
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+// 1. Replace react-router-dom Link with next/link
+import Link from "next/link";
+// 2. Import Head from next/head for SEO
+import Head from "next/head";
 import { CgSpinner } from "react-icons/cg";
 import { useMutation } from "@tanstack/react-query";
-import DealerServices from "../../services/Dealer/ResetPassword";
-import Logo from "../../assets/images/logo.png";
-import { Helmet } from "react-helmet-async";
+
+// Assuming these paths are correct in your Next.js project structure
+import DealerServices from "../services/Dealer/ResetPassword";
+
 import { Formik, Field, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
@@ -18,11 +23,17 @@ const ForgetPassword = () => {
   const [errmessage, setErrMessage] = useState("");
   const [spinner, setSpinner] = useState(false);
 
+  // NOTE: The timeout duration (400000000 ms) is extremely long (over 11 years).
+  // I recommend changing it to a reasonable duration, e.g., 5000 ms (5 seconds).
+  const MESSAGE_TIMEOUT_MS = 5000; // 5 seconds
+
   // React Query mutation for forget password
   const mutation = useMutation({
     mutationFn: (emailData) =>
       DealerServices.ForgetPassword({
         email: emailData.email,
+        // window.location.origin is generally safe in a client-side component,
+        // but ensure it works correctly if server-side rendering is a factor.
         reset_url: `${window.location.origin}/reset-password`,
       }),
     onMutate: () => {
@@ -32,6 +43,7 @@ const ForgetPassword = () => {
     },
     onSuccess: (res) => {
       setSpinner(false);
+      // Assuming 'status' is a boolean or can be evaluated as truthy/falsy
       res.status ? setMessage(res.message) : setErrMessage(res.message);
     },
     onError: () => {
@@ -44,28 +56,34 @@ const ForgetPassword = () => {
   const handleSubmit = (values) => mutation.mutate(values);
 
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      setMessage("");
-      setErrMessage("");
-    }, 400000000);
+    // Corrected timeout duration
+    let timeoutId;
+    if (message || errmessage) {
+      timeoutId = setTimeout(() => {
+        setMessage("");
+        setErrMessage("");
+      }, MESSAGE_TIMEOUT_MS);
+    }
 
     return () => clearTimeout(timeoutId);
   }, [message, errmessage]);
 
   return (
     <>
-      <Helmet>
+      {/* 2. Replaced Helmet with Next.js Head component */}
+      <Head>
         <title>Impel Store - Forget Password</title>
-      </Helmet>
+      </Head>
       <section className="login">
         <div className="container">
           <div className="row justify-content-center">
             <div className="col-md-5">
               <div className="login_detail">
                 <div className="text-center">
-                  <img src={Logo} alt="logo" />
+                  <img src='/assets/images/logo.png' alt="logo" />
                 </div>
                 <h2>Forget Password</h2>
+                {/* Status Messages */}
                 {message && (
                   <div className={`message-container ${message ? "my-1" : ""}`}>
                     {message && <span className="message-text">{message}</span>}
@@ -76,7 +94,7 @@ const ForgetPassword = () => {
                     <span className="message-text">{errmessage}</span>
                   </div>
                 )}
-
+                {/* Form */}
                 <Formik
                   initialValues={{ email: "" }}
                   validationSchema={validationSchema}
@@ -97,8 +115,8 @@ const ForgetPassword = () => {
                           className="text-danger"
                         />
                       </div>
-                      <button className="forget_pass_btn" type="submit">
-                        {spinner && (
+                      <button className="forget_pass_btn" type="submit" disabled={isSubmitting || mutation.isLoading}>
+                        {(spinner || mutation.isLoading) && ( // Use mutation.isLoading for better React Query integration
                           <CgSpinner size={20} className="animate_spin me-2" />
                         )}
                         Send reset password link
@@ -108,11 +126,11 @@ const ForgetPassword = () => {
                 </Formik>
 
                 <p>
-                  <Link
-                    to="/dealer-login"
-                    className="text-decoration-none text-success"
-                  >
-                    Back to dealer login
+                  {/* 1. Next.js Link uses 'href' and wraps an anchor tag */}
+                  <Link href="/dealer-login" passHref legacyBehavior>
+                    <a className="text-decoration-none text-success">
+                      Back to dealer login
+                    </a>
                   </Link>
                 </p>
               </div>
