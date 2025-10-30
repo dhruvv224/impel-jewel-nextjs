@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
@@ -27,7 +27,7 @@ const debounce = (func, wait) => {
   };
 };
 
-const ReadytoDispatch = () => {
+const ReadytoDispatchInner = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -36,9 +36,18 @@ const ReadytoDispatch = () => {
     { id: "1,5", name: "Gold" },
   ];
 
-  const userType = localStorage.getItem("user_type");
-  const email = localStorage.getItem("email");
-  const user_id = localStorage.getItem("user_id");
+  // SSR-safe localStorage access
+  const [userType, setUserType] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [user_id, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setUserType(localStorage.getItem("user_type"));
+      setEmail(localStorage.getItem("email"));
+      setUserId(localStorage.getItem("user_id"));
+    }
+  }, []);
 
   const [products, setProducts] = useState([]);
   const [filters, setFilters] = useState([]);
@@ -64,7 +73,7 @@ const ReadytoDispatch = () => {
   // Centralized debounced function to update URL and fetch data
   // Debounced API/search update
   const debouncedNavigate = useRef(
-    debounce((searchText) => {
+    debounce((searchText: string) => {
       const queryParams = new URLSearchParams(searchParams.toString());
       queryParams.delete("page");
       if (searchText.trim().length > 0) {
@@ -78,53 +87,56 @@ const ReadytoDispatch = () => {
   );
 
   // Generic handler for filter changes
-const handleFilterChange = (key, selectedOption, paramName) => {
-  const queryParams = new URLSearchParams(searchParams.toString());
-  queryParams.delete("page"); // reset pagination
+  const handleFilterChange = (
+    key: string,
+    selectedOption: any,
+    paramName: string
+  ) => {
+    const queryParams = new URLSearchParams(searchParams.toString());
+    queryParams.delete("page"); // reset pagination
 
-  if (selectedOption) {
-    queryParams.set(paramName, selectedOption.value);
-  } else {
-    queryParams.delete(paramName);
-  }
+    if (selectedOption) {
+      queryParams.set(paramName, selectedOption.value);
+    } else {
+      queryParams.delete(paramName);
+    }
 
-  // ✅ Update URL with new query params
-  router.push(`/ready-to-dispatch?${queryParams.toString()}`);
-  setPagination((prev) => ({ ...prev, currentPage: 1 }));
+    // ✅ Update URL with new query params
+    router.push(`/ready-to-dispatch?${queryParams.toString()}`);
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
 
-  // ✅ Update local state
-  switch (key) {
-    case "companyId": setCompanyId(selectedOption); break;
-    case "selectedSizes": setSelectedSizes(selectedOption); break;
-    case "selectedItemGroups": setSelectedItemGroups(selectedOption); break;
-    case "selectedItems": setSelectedItems(selectedOption); break;
-    case "selectedSubItems": setSelectedSubItems(selectedOption); break;
-    case "selectedStyles": setSelectedStyles(selectedOption); break;
-    default: break;
-  }
-};
-
+    // ✅ Update local state
+    switch (key) {
+      case "companyId": setCompanyId(selectedOption); break;
+      case "selectedSizes": setSelectedSizes(selectedOption); break;
+      case "selectedItemGroups": setSelectedItemGroups(selectedOption); break;
+      case "selectedItems": setSelectedItems(selectedOption); break;
+      case "selectedSubItems": setSelectedSubItems(selectedOption); break;
+      case "selectedStyles": setSelectedStyles(selectedOption); break;
+      default: break;
+    }
+  };
 
   // Specific filter handlers
   // Simple debounced search handler
-const handleSearchItems = (e) => {
-  const searchedText = e.target.value;
-  setTagNoChange(searchedText);
-  debouncedNavigate.current(searchedText);
-};
+  const handleSearchItems = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const searchedText = e.target.value;
+    setTagNoChange(searchedText);
+    debouncedNavigate.current(searchedText);
+  };
 
-  const handleItems = (selectedOption) => handleFilterChange("selectedItems", selectedOption, "items");
-  const handleSubItems = (selectedOption) => handleFilterChange("selectedSubItems", selectedOption, "sub-items");
-  const handleSizes = (selectedOption) => handleFilterChange("selectedSizes", selectedOption, "sizes");
-  const handleCompanyId = (selectedOption) => handleFilterChange("companyId", selectedOption, "companyId");
-  const handleSelectedStyle = (selectedOption) => handleFilterChange("selectedStyles", selectedOption, "styles");
-  const handleSelectedItemGroup = (selectedOption) => handleFilterChange("selectedItemGroups", selectedOption, "item-group");
+  const handleItems = (selectedOption: any) => handleFilterChange("selectedItems", selectedOption, "items");
+  const handleSubItems = (selectedOption: any) => handleFilterChange("selectedSubItems", selectedOption, "sub-items");
+  const handleSizes = (selectedOption: any) => handleFilterChange("selectedSizes", selectedOption, "sizes");
+  const handleCompanyId = (selectedOption: any) => handleFilterChange("companyId", selectedOption, "companyId");
+  const handleSelectedStyle = (selectedOption: any) => handleFilterChange("selectedStyles", selectedOption, "styles");
+  const handleSelectedItemGroup = (selectedOption: any) => handleFilterChange("selectedItemGroups", selectedOption, "item-group");
 
   // Fetch products and filters
   const getProductsFilterAndData = useCallback(async () => {
     setIsLoading(true);
     const queryParams = new URLSearchParams(searchParams.toString());
-    const currentPage = parseInt(queryParams.get("page")) || 1;
+    const currentPage = parseInt(queryParams.get("page") ?? "1") || 1;
     const currentSearch = queryParams.get("search");
     const itemsFromURL = queryParams.get("items");
     const subItemsFromURL = queryParams.get("sub-items");
@@ -137,7 +149,7 @@ const handleSearchItems = (e) => {
 
     try {
       const companyTagRes = await profileService.GetCompanyTag();
-      const companyData = companyTagRes?.data?.map((data) => data?.company_tag_id).join(",");
+      const companyData = companyTagRes?.data?.map((data: any) => data?.company_tag_id).join(",");
 
       const productsResponse = await fetch("https://api.indianjewelcast.com/api/Tag/GetAll", {
         method: "POST",
@@ -213,23 +225,19 @@ const handleSearchItems = (e) => {
   setTagNoChange(currentSearch || "");
 }
       setSelectedItems(
-        itemsFromURL && filterData?.Filters?.Items
-          ? filterData.Filters.Items.find((item) => item?.ItemID === Number(itemsFromURL))
-            ? {
-                value: Number(itemsFromURL),
-                label: filterData.Filters.Items.find((item) => item?.ItemID === Number(itemsFromURL))?.ItemName,
-              }
-            : null
+        itemsFromURL
+          ? {
+              value: Number(itemsFromURL),
+              label: filterData.Filters.Items.find((item: any) => item?.ItemID === Number(itemsFromURL))?.ItemName,
+            }
           : null
       );
       setSelectedSubItems(
-        subItemsFromURL && filterData?.Filters?.SubItems
-          ? filterData.Filters.SubItems.find((item) => item?.SubItemID === Number(subItemsFromURL))
-            ? {
-                value: Number(subItemsFromURL),
-                label: filterData.Filters.SubItems.find((item) => item?.SubItemID === Number(subItemsFromURL))?.SubItemName,
-              }
-            : null
+        subItemsFromURL
+          ? {
+              value: Number(subItemsFromURL),
+              label: filterData.Filters.SubItems.find((item: any) => item?.SubItemID === Number(subItemsFromURL))?.SubItemName,
+            }
           : null
       );
       setSelectedSizes(
@@ -396,7 +404,9 @@ const handleSearchItems = (e) => {
 
   const DealerLogin = (e) => {
     e.preventDefault();
-    localStorage.setItem("redirectPath", "/ready-to-dispatch");
+    if (typeof window !== "undefined") {
+      localStorage.setItem("redirectPath", "/ready-to-dispatch");
+    }
     router.push("/dealer-login");
   };
 
@@ -414,6 +424,13 @@ const handleSearchItems = (e) => {
 
   const pdfTip = <Tooltip id="tooltip">My PDF share</Tooltip>;
   const shimmerItems = Array(20).fill(null);
+
+  useEffect(() => {
+    // Only runs on client
+    setUserType(typeof window !== "undefined" ? localStorage.getItem("user_type") : null);
+    setEmail(typeof window !== "undefined" ? localStorage.getItem("email") : null);
+    setUserId(typeof window !== "undefined" ? localStorage.getItem("user_id") : null);
+  }, []);
 
   return (
     <>
@@ -686,5 +703,11 @@ const handleSearchItems = (e) => {
     </>
   );
 };
+
+const ReadytoDispatch = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <ReadytoDispatchInner />
+  </Suspense>
+);
 
 export default ReadytoDispatch;

@@ -36,7 +36,6 @@ const api ='https://admin.impel.store/api/'
 const ReadyDetails = ({ params }) => {
   const router = useRouter();
   const currentPath = usePathname();
-  const searchParams = useSearchParams();
   // Use slug from URL (prioritize dynamic route segment if present, otherwise search param)
   // This ensures we get the item's identifier from the URL.
   const routeId = 'GR22-635';

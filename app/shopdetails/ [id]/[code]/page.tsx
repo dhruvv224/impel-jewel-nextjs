@@ -1,6 +1,6 @@
 'use client'; // ⬅️ CRUCIAL: Must be a Client Component to use hooks like useState, useEffect, useContext, and useQuery.
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { Suspense, useContext, useEffect, useState } from "react";
 // Next.js App Router imports for routing and URL params
 import Link from "next/link"; 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"; // ⬅️ Replaces useLocation, useNavigate, and logic for useParams
@@ -33,7 +33,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 import auth925 from "../../assets/images/Tags/Auth925.png";
 
-const ShopDetails = () => {
+const ShopDetailsInner = () => {
   // ❌ Original: const location = useLocation();
   // ❌ Original: const navigate = useNavigate();
   
@@ -41,7 +41,6 @@ const ShopDetails = () => {
   const router = useRouter(); 
   const pathname = usePathname(); // Equivalent to location.pathname
   const searchParams = useSearchParams(); 
-
   // ❌ Original: const { id } = useParams();
   // We use searchParams to get the ID since the original component used location.state/URL params heavily.
   const id = searchParams.get('id'); 
@@ -1226,4 +1225,11 @@ const ShopDetails = () => {
     </>
   );
 };
+
+const ShopDetails = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <ShopDetailsInner />
+  </Suspense>
+);
+
 export default ShopDetails;

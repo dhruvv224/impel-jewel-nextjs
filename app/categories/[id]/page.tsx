@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import BreadCrumb from "../../components/common/BreadCrumb";
@@ -8,9 +8,10 @@ import categoryDetail from "../../services/Shop";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
-const CategoriesItems = () => {
+const CategoriesItemsInner = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const pathname = usePathname();
   const categoryIdFromState = searchParams.get('id');
   console.log(categoryIdFromState,'categoryIdFromState')
@@ -250,4 +251,11 @@ const CategoriesItems = () => {
     </section>
   );
 };
+
+const CategoriesItems = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <CategoriesItemsInner />
+  </Suspense>
+);
+
 export default CategoriesItems;

@@ -1,255 +1,274 @@
-// import React, { useLayoutEffect, useState } from "react";
-// import { Helmet } from "react-helmet-async";
+"use client"; // 👈 Mark as a Client Component
+
+import React, { Suspense, useEffect, useState } from "react";
+// Import Next.js specific components and hooks
+import { useRouter, useSearchParams } from "next/navigation"; 
+import Image from "next/image"; // For logo optimization
+// Removed: import { Helmet } from "react-helmet-async";
+// Removed: import { useLocation, useNavigate } from "react-router-dom";
 // import "./OrderTrack.css";
-// import Userservice from "../../services/Cart";
-// import { FaBox, FaCheck, FaRegUser, FaTruck } from "react-icons/fa";
-// import noImage from "../../assets/images/No_Image_Available.jpg";
-// import { useLocation, useNavigate } from "react-router-dom";
-// import Loader from "../../components/common/Loader";
-// import Logo from "../../assets/images/logo.png";
+import Userservice from "../services/Cart";
+import { FaBox, FaCheck, FaRegUser, FaTruck } from "react-icons/fa";
+// Assuming this path is correct for a local image file
+import Loader from "../components/common/Loader";
 
-// const OrderTracking = () => {
-//   const location = useLocation();
-//   const navigate = useNavigate();
-//   const dynamicId = location.search ? location.search.substring(1) : null;
-//   const [Items, setItems] = useState([]);
-//   const [trackStatus, setTrackStatus] = useState([]);
-//   const [product, setProduct] = useState([]);
-//   const [message, setmessage] = useState([]);
-//   const [isLoading, setIsLoading] = useState("");
-//   const [itemStatus, setItemStatus] = useState(true);
+// Define the absolute path for the logo for the Next.js Image component
+// Note: If 'assets/images/logo.png' is a local file, Next.js Image component is preferred.
 
-//   const GetUserOrders = async () => {
-//     Userservice.OrdersTracking({
-//       order_number: dynamicId,
-//     })
-//       .then((res) => {
-//         if (res?.status === true && res?.data?.docate_number) {
-//           const docketNumber = res?.data?.docate_number;
-//           setItems(res.data);
-//           setProduct(res.data?.order_items);
-//           setIsLoading(false);
-//           setItemStatus(res.status);
+const OrderTrackingDetailsInner = () => {
+  const router = useRouter(); // 👈 Next.js hook for navigation
+  const searchParams = useSearchParams(); // 👈 Next.js hook for query params
+  
+  // Get the order number from the query parameter (e.g., /order-tracking?order_number=XYZ)
+  const dynamicId = searchParams.get('order_number'); 
 
-//           Userservice.DeliveryTrack({
-//             docket: docketNumber,
-//           })
-//             .then((res) => {
-//               if (res.status === "true") {
-//                 setTrackStatus(res?.data);
-//               }
-//             })
-//             .catch((err) => {
-//               console.log(err);
-//               setIsLoading(false);
-//             });
-//         } else {
-//           setIsLoading(false);
-//           setmessage(res?.message);
-//           setItemStatus(res.status);
-//         }
-//       })
-//       .catch((err) => {
-//         console.log(err);
-//         setIsLoading(false);
-//       });
-//   };
+  const [Items, setItems] = useState(null); // Changed initial state to null
+  const [trackStatus, setTrackStatus] = useState(null); // Changed initial state to null
+  const [product, setProduct] = useState([]);
+  const [message, setMessage] = useState(null); // Corrected typo in original code
+  const [isLoading, setIsLoading] = useState(true); // Changed initial state to true
+  const [itemStatus, setItemStatus] = useState(false);
 
-//   useLayoutEffect(() => {
-//     GetUserOrders();
-//   }, [location]);
+  const GetUserOrders = async (orderNumber) => {
+    if (!orderNumber) {
+        setIsLoading(false);
+        return;
+    }
+    
+    Userservice.OrdersTracking({
+      order_number: orderNumber,
+    })
+      .then((res) => {
+        setItems(res?.data);
+        setProduct(res.data?.order_items || []);
+        setMessage(res?.message);
+        setItemStatus(res.status); // true/false status from API
 
-//   let tracking_status = "";
+        if (res?.status === true && res?.data?.docate_number) {
+          const docketNumber = res.data.docate_number;
 
-//   if (trackStatus?.shipment_status === "SCREATED") {
-//     tracking_status = "Shipment Created";
-//   } else if (trackStatus?.shipment_status === "SCHECKIN") {
-//     tracking_status = "If the shipment picked up by sequel staff";
-//   } else if (trackStatus?.shipment_status === "SLINREC") {
-//     tracking_status =
-//       "If the shipment is at the hub and checked into the hub is at the hub";
-//   } else if (trackStatus?.shipment_status === "SLINORIN") {
-//     tracking_status = "Shipment Departed from Origin Hub";
-//   } else if (trackStatus?.shipment_status === "SLINDEST") {
-//     tracking_status = "Shipment Arrived at destination hub";
-//   } else if (trackStatus?.shipment_status === "SDELASN") {
-//     tracking_status = "Shipment out for delivery";
-//   } else if (trackStatus?.shipment_status === "SDELVD") {
-//     tracking_status = "Shipment is delivered";
-//   } else if (trackStatus?.shipment_status === "SCANCELLED") {
-//     tracking_status = "Shipment is cancelled";
-//   } else {
-//   }
+          // Nested call for Delivery Track
+          Userservice.DeliveryTrack({
+            docket: docketNumber,
+          })
+            .then((trackRes) => {
+              // Note: API returns "true" string, so matching that logic
+              if (trackRes.status === "true") {
+                setTrackStatus(trackRes?.data);
+              }
+            })
+            .catch((err) => {
+              console.error("Error fetching delivery track:", err);
+            })
+            .finally(() => {
+                setIsLoading(false); 
+            });
+        } else {
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching order tracking:", err);
+        setIsLoading(false);
+        setItemStatus(false);
+        setMessage("An error occurred while fetching order details.");
+      });
+  };
 
-//   return (
-//     <>
-//       <Helmet>
-//         <title>Impel Store - Order Tracking</title>
-//       </Helmet>
-//       <section className="login">
-//         {isLoading ? (
-//           <Loader />
-//         ) : (
-//           <>
-//             {" "}
-//             <div className="container">
-//               <div className="">
-//                 <div className="row justify-content-center text-align-center">
-//                   <div className="order-track-section mt-3">
-//                     <article className="card">
-//                       <div className="text-center p-3">
-//                         <img src={Logo} alt="logo" style={{ width: "130px" }} />
-//                       </div>
+  useEffect(() => {
+    // Fetch data whenever the order number changes
+    GetUserOrders(dynamicId);
+    // Note: useLayoutEffect is generally discouraged for data fetching; useEffect is preferred.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dynamicId]);
 
-//                       {itemStatus === true ? (
-//                         <>
-//                           <div className="card-body">
-//                             <h6>Order ID: #{Items?.order_id}</h6>
-//                             <article className="card">
-//                               <div className="card-body row">
-//                                 <div className="col">
-//                                   <strong>Estimated Delivery time:</strong>{" "}
-//                                   <br />
-//                                   {trackStatus?.estimated_delivery}
-//                                 </div>
-//                                 <div className="col">
-//                                   <strong>Shipping BY:</strong> <br />
-//                                   {trackStatus?.insurance}
-//                                 </div>
-//                                 <div className="col">
-//                                   <strong>Status:</strong> <br />
-//                                   {tracking_status}
-//                                 </div>
-//                                 <div className="col">
-//                                   <strong>Tracking #:</strong> <br />
-//                                   {trackStatus?.docket_no}
-//                                 </div>
-//                               </div>
-//                             </article>
+  // Determine user-friendly tracking status
+  let tracking_status_text = "N/A";
+  const shipmentStatus = trackStatus?.shipment_status;
 
-//                             <div className="track">
-//                               <div
-//                                 className={`step ${
-//                                   trackStatus?.shipment_status === "SCREATED" ||
-//                                   trackStatus?.shipment_status === "SCHECKIN" ||
-//                                   trackStatus?.shipment_status === "SDELVD" ||
-//                                   trackStatus?.shipment_status === "SDELASN"
-//                                     ? "active"
-//                                     : ""
-//                                 }`}
-//                               >
-//                                 <span className="icon">
-//                                   <FaCheck />
-//                                 </span>
-//                                 <span className="text">Order confirmed</span>
-//                               </div>
-//                               <div
-//                                 className={`step ${
-//                                   trackStatus?.shipment_status === "SCHECKIN" ||
-//                                   trackStatus?.shipment_status === "SDELASN" ||
-//                                   trackStatus?.shipment_status === "SDELVD"
-//                                     ? "active"
-//                                     : ""
-//                                 }`}
-//                               >
-//                                 <span className="icon">
-//                                   <FaRegUser />
-//                                 </span>
-//                                 <span className="text">Picked by courier</span>
-//                               </div>
-//                               <div
-//                                 className={`step ${
-//                                   trackStatus?.shipment_status === "SDELASN" ||
-//                                   trackStatus?.shipment_status === "SDELVD"
-//                                     ? "active"
-//                                     : ""
-//                                 }`}
-//                               >
-//                                 <span className="icon">
-//                                   <FaTruck />
-//                                 </span>
-//                                 <span className="text">On the way</span>
-//                               </div>
-//                               <div
-//                                 className={`step ${
-//                                   trackStatus?.shipment_status === "SDELVD"
-//                                     ? "active"
-//                                     : ""
-//                                 }`}
-//                               >
-//                                 <span className="icon">
-//                                   <FaBox />
-//                                 </span>
-//                                 <span className="text">Ready for pickup</span>
-//                               </div>
-//                             </div>
+  if (shipmentStatus) {
+      if (shipmentStatus === "SCREATED") {
+          tracking_status_text = "Order confirmed";
+      } else if (shipmentStatus === "SCHECKIN") {
+          tracking_status_text = "Picked by courier / At Origin Hub";
+      } else if (shipmentStatus === "SLINREC") {
+          tracking_status_text = "Arrived at Origin Hub";
+      } else if (shipmentStatus === "SLINORIN") {
+          tracking_status_text = "Shipment Departed from Origin Hub";
+      } else if (shipmentStatus === "SLINDEST") {
+          tracking_status_text = "Shipment Arrived at destination hub";
+      } else if (shipmentStatus === "SDELASN") {
+          tracking_status_text = "Out for delivery";
+      } else if (shipmentStatus === "SDELVD") {
+          tracking_status_text = "Delivered";
+      } else if (shipmentStatus === "SCANCELLED") {
+          tracking_status_text = "Shipment is cancelled";
+      }
+  }
 
-//                             <hr />
-//                             <ul className="row">
-//                               {product?.map((datas) => (
-//                                 <>
-//                                   <li className="col-md-4">
-//                                     <figure className="itemside mb-3">
-//                                       <div className="aside">
-//                                         <img
-//                                           src={datas?.design_image}
-//                                           className="img-sm border"
-//                                           alt=""
-//                                         />
-//                                       </div>
-//                                       <figcaption className="info">
-//                                         <h6 className="title">
-//                                           {datas?.design_name}
-//                                         </h6>
-//                                         {/* <h6>{datas?.net_weight} g.(Approx.)</h6>
-//                                       <span className="text-muted">
-//                                         ₹{numberFormat(datas?.item_total)}
-//                                       </span> */}
-//                                       </figcaption>
-//                                     </figure>
-//                                   </li>
-//                                 </>
-//                               ))}
-//                             </ul>
-//                             <hr />
 
-//                             <div className="d-flex justify-content-center align-items-center">
-//                               <button
-//                                 className="view_all_btn px-4 py-2"
-//                                 style={{ borderRadius: "8px" }}
-//                                 onClick={() => navigate("/")}
-//                               >
-//                                 Back to Site
-//                               </button>
-//                             </div>
-//                           </div>
-//                         </>
-//                       ) : (
-//                         <>
-//                           <div className="card-body">
-//                             <h4 className="text-center">{message}</h4>
-//                             <div className="d-flex justify-content-center align-items-center mt-4">
-//                               <button
-//                                 className="view_all_btn px-4 py-2"
-//                                 style={{ borderRadius: "8px" }}
-//                                 onClick={() => navigate("/")}
-//                               >
-//                                 Back to Site
-//                               </button>
-//                             </div>
-//                           </div>
-//                         </>
-//                       )}
-//                     </article>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//           </>
-//         )}
-//       </section>
-//     </>
-//   );
-// };
+  return (
+    <>
+      {/* Next.js client-side equivalent for setting the page title */}
+      <title>Impel Store - Order Tracking</title>
+      
+      <section className="login">
+        {isLoading ? (
+          <Loader />
+        ) : (
+          <div className="container">
+            <div className="">
+              <div className="row justify-content-center text-align-center">
+                <div className="order-track-section mt-3">
+                  <article className="card">
+                    <div className="text-center p-3">
+                      {/* Using Next.js Image component for the logo */}
+                      <Image 
+                        src='/assets/images/logo.png' 
+                        alt="logo" 
+                        style={{ width: "130px", height: "auto" }} 
+                        width={130}
+                        height={50} // Adjust height to match aspect ratio
+                      />
+                    </div>
 
-// export default OrderTracking;
+                    {itemStatus === true && Items ? (
+                      <>
+                        <div className="card-body">
+                          <h6>Order ID: #{Items?.order_id}</h6>
+                          <article className="card">
+                            <div className="card-body row">
+                              <div className="col">
+                                <strong>Estimated Delivery time:</strong>{" "}
+                                <br />
+                                {trackStatus?.estimated_delivery || 'N/A'}
+                              </div>
+                              <div className="col">
+                                <strong>Shipping BY:</strong> <br />
+                                {trackStatus?.insurance || 'N/A'}
+                              </div>
+                              <div className="col">
+                                <strong>Status:</strong> <br />
+                                {tracking_status_text}
+                              </div>
+                              <div className="col">
+                                <strong>Tracking #:</strong> <br />
+                                {trackStatus?.docket_no || 'N/A'}
+                              </div>
+                            </div>
+                          </article>
+
+                          <div className="track">
+                            {/* Simplified tracking logic using the shipment status */}
+                            <div
+                              className={`step ${
+                                shipmentStatus && ["SCREATED", "SCHECKIN", "SLINREC", "SLINORIN", "SLINDEST", "SDELASN", "SDELVD"].includes(shipmentStatus) ? "active" : ""
+                              }`}
+                            >
+                              <span className="icon">
+                                <FaCheck />
+                              </span>
+                              <span className="text">Order confirmed</span>
+                            </div>
+                            <div
+                              className={`step ${
+                                shipmentStatus && ["SCHECKIN", "SLINREC", "SLINORIN", "SLINDEST", "SDELASN", "SDELVD"].includes(shipmentStatus) ? "active" : ""
+                              }`}
+                            >
+                              <span className="icon">
+                                <FaRegUser />
+                              </span>
+                              <span className="text">Picked by courier</span>
+                            </div>
+                            <div
+                              className={`step ${
+                                shipmentStatus && ["SDELASN", "SDELVD"].includes(shipmentStatus) ? "active" : ""
+                              }`}
+                            >
+                              <span className="icon">
+                                <FaTruck />
+                              </span>
+                              <span className="text">Out for delivery</span>
+                            </div>
+                            <div
+                              className={`step ${
+                                shipmentStatus === "SDELVD" ? "active" : ""
+                              }`}
+                            >
+                              <span className="icon">
+                                <FaBox />
+                              </span>
+                              <span className="text">Delivered</span>
+                            </div>
+                          </div>
+
+                          <hr />
+                          <ul className="row">
+                            {product?.map((datas) => (
+                              <li key={datas?.design_id} className="col-md-4">
+                                <figure className="itemside mb-3">
+                                  <div className="aside">
+                                    <img // Keeping <img> here, assuming image URL is external
+                                      src={datas?.design_image ||'/assets/images/No_Image_Available.jpg'}
+                                      className="img-sm border"
+                                      alt={datas?.design_name}
+                                    />
+                                  </div>
+                                  <figcaption className="info">
+                                    <h6 className="title">
+                                      {datas?.design_name}
+                                    </h6>
+                                  </figcaption>
+                                </figure>
+                              </li>
+                            ))}
+                          </ul>
+                          <hr />
+
+                          <div className="d-flex justify-content-center align-items-center">
+                            <button
+                              className="view_all_btn px-4 py-2"
+                              style={{ borderRadius: "8px" }}
+                              // Use Next.js router for navigation
+                              onClick={() => router.push("/")} 
+                            >
+                              Back to Site
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="card-body">
+                          <h4 className="text-center">{message || "Order details not available."}</h4>
+                          <div className="d-flex justify-content-center align-items-center mt-4">
+                            <button
+                              className="view_all_btn px-4 py-2"
+                              style={{ borderRadius: "8px" }}
+                              // Use Next.js router for navigation
+                              onClick={() => router.push("/")}
+                            >
+                              Back to Site
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+    </>
+  );
+};
+
+const OrderTrackingDetails = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <OrderTrackingDetailsInner />
+  </Suspense>
+);
+
+export default OrderTrackingDetails;

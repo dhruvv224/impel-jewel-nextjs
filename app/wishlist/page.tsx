@@ -18,20 +18,27 @@ import { CartSystem } from "../context/CartContext";
 import Loader from "../components/common/Loader";
 
 const WishList = () => {
-  // Accessing localStorage is safe within a 'use client' component.
-  const phone = localStorage.getItem("phone");
+  // SSR-safe localStorage access
+  const [phone, setPhone] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setPhone(localStorage.getItem("phone"));
+    }
+  }, []);
+
   const { dispatch: addtocartDispatch } = useContext(CartSystem);
   const { dispatch: removeWishlistDispatch } = useContext(WishlistSystem);
 
   // ✅ Next.js Router for programmatic navigation
   const router = useRouter(); 
 
-  const [items, setItems] = useState([]);
-  const [removingItemId, setRemovingItemId] = useState(null);
+  const [items, setItems] = useState<any[]>([]);
+  const [removingItemId, setRemovingItemId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [productQuantity, setProductQuantity] = useState(1);
-  const [cartItems, setCartItems] = useState([]);
-  const [removeCartItems, setRemoveCartItems] = useState(null);
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [removeCartItems, setRemoveCartItems] = useState<any>(null);
 
   const GetUserWishlist = async () => {
     // Only attempt to fetch if phone is available
@@ -39,7 +46,6 @@ const WishList = () => {
         setIsLoading(false);
         return;
     }
-    
     Userservice.userWishlist({ phone: phone })
       .then((res) => {
         setItems(res?.data?.wishlist_items);
@@ -53,7 +59,6 @@ const WishList = () => {
 
   const GetUserCartList = async () => {
     if (!phone) return;
-    
     UserCartService.CartList({ phone: phone })
       .then((res) => {
         setCartItems(res.data.cart_items);
@@ -63,7 +68,7 @@ const WishList = () => {
       });
   };
 
-  const removeFromWishList = (id) => {
+  const removeFromWishList = (id: number) => {
     const payload = id;
     setRemovingItemId(id);
     Userservice.removetoWishlist({ phone: phone, design_id: id })
@@ -86,7 +91,7 @@ const WishList = () => {
       });
   };
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (product: any) => {
     const payload = { id: product.id };
     setRemoveCartItems(product);
     const CartData = {
@@ -134,13 +139,13 @@ const WishList = () => {
     GetUserCartList();
   }, [phone]); // Added 'phone' to dependency array
 
-  const goldColor = {
+  const goldColor: Record<string, string> = {
     yellow_gold: "Yellow Gold",
     rose_gold: "Rose Gold",
     white_gold: "White Gold",
   };
 
-  const numberFormat = (value) =>
+  const numberFormat = (value: number) =>
     new Intl.NumberFormat("en-IN")?.format(Math?.round(value));
 
   return (
@@ -163,7 +168,7 @@ const WishList = () => {
                         <h2 className="text-center pb-3 text-uppercase fw-bolder">
                           My Wishlist
                         </h2>
-                        {items?.map((product) => {
+                        {items?.map((product: any) => {
                           return (
                             <div className="col-md-6 col-lg-3" key={product.id}>
                               <div className="card">
@@ -209,10 +214,6 @@ const WishList = () => {
                                           )}
                                         </h6>
                                       )}
-
-                                      {/* {product.gold_type == "18k" && (
-                                        <h6>₹{product?.total_amount_18k}</h6>
-                                      )} */}
 
                                       {product.gold_type == "18k" && (
                                         <h6>

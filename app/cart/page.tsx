@@ -1,6 +1,6 @@
 'use client'; // ⬅️ REQUIRED: This component is stateful and uses client-side APIs.
 
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, Suspense } from "react";
 // ✅ Next.js App Router replacements for routing
 import Link from "next/link";
 import { useRouter, usePathname, useSearchParams } from "next/navigation"; 
@@ -1670,4 +1670,12 @@ const Cart = () => {
   );
 };
 
-export default Cart;
+const CartPageInner = Cart;
+
+const CartPage = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <CartPageInner />
+  </Suspense>
+);
+
+export default CartPage;

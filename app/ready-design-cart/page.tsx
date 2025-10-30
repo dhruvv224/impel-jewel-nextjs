@@ -1,5 +1,5 @@
 'use client';
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState, Suspense } from "react";
 import Head from "next/head";
 import Loader from "../components/common/Loader";
 import Link from "next/link";
@@ -22,48 +22,55 @@ import { LoadingOutlined } from "@ant-design/icons";
 
 const api = process.env.NEXT_PUBLIC_API_KEY;
 
-const ReadyDesignCart = () => {
+const ReadyDesignCartInner = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const user_id = typeof window !== "undefined" ? localStorage.getItem("user_id") : "";
-  const Verification = typeof window !== "undefined" ? localStorage.getItem("verification") : "";
-  const phone = typeof window !== "undefined" ? localStorage.getItem("phone") : "";
+
+  // SSR-safe localStorage access
+  const [user_id, setUserId] = useState<string>("");
+  const [Verification, setVerification] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setUserId(localStorage.getItem("user_id") || "");
+      setVerification(localStorage.getItem("verification") || "");
+      setPhone(localStorage.getItem("phone") || "");
+    }
+  }, []);
+
+  // Fix context usage
   const { dispatch: removeFromCartDispatch } = useContext(ReadyDesignCartSystem as any);
+  const { dispatch: resetcartcount } = useContext(ReadyDesignCartSystem as any);
+  const { dispatch: profilename, state: namestate } = useContext(ProfileSystem as any);
 
   const [isLoading, setIsLoading] = useState(true);
-  const [Items, setItems] = useState([]);
-  const [removingItemId, setRemovingItemId] = useState(null);
-
-  const [selectPaymentMethod, setSelectPaymentMethod] = useState("");
-
-  const { dispatch: resetcartcount } = useContext(ReadyDesignCartSystem);
-
-  const { dispatch: profilename, state: namestate } = useContext(ProfileSystem);
-
+  const [Items, setItems] = useState<any[]>([]);
+  const [removingItemId, setRemovingItemId] = useState<number | null>(null);
+  const [selectPaymentMethod, setSelectPaymentMethod] = useState<string>("");
   const [show, setShow] = useState(false);
-  const [dealer_code, setDealer_Code] = useState("");
-
-  const [pin_code, setPin_Code] = useState("");
-  const [pin_code_err, setPin_Code_Err] = useState("");
-  const [pin_code_msg, setPin_Code_Msg] = useState("");
+  const [dealer_code, setDealer_Code] = useState<string>("");
+  const [pin_code, setPin_Code] = useState<string>("");
+  const [pin_code_err, setPin_Code_Err] = useState<string>("");
+  const [pin_code_msg, setPin_Code_Msg] = useState<string>("");
   const [pin_code_loader, setPin_Code_Loader] = useState(false);
   const [pin_code_valid, setPin_Code_Valid] = useState(false);
+  const [isFormEmpty, setIsFormEmpty] = useState<string>("");
+  const [code, setCode] = useState<{ discount_type?: string; discount_value?: number; dealer_code?: string }>(
+    { discount_type: "", discount_value: 0, dealer_code: "" }
+  );
+  const [docket_Number, setDocket_Number] = useState<any[]>([]);
 
-  const [isFormEmpty, setIsFormEmpty] = useState("");
-  const [code, setCode] = useState("");
-
-  const [docket_Number, setDocket_Number] = useState([]);
-
-  const handleDealercode = (e) => {
+  const handleDealercode = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDealer_Code(e.target.value);
   };
 
-  const handleSelectPayment = (selectedOption) => {
+  const handleSelectPayment = (selectedOption: any) => {
     setSelectPaymentMethod(selectedOption?.value);
   };
 
-  const Applycoupen = (e) => {
+  const Applycoupen = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     UserService.DealerCode({ phone: phone, dealer_code: dealer_code })
       .then((res) => {
@@ -96,14 +103,14 @@ const ReadyDesignCart = () => {
     // calculateTotal();
   };
 
-  const handlePincode = (e) => {
+  const handlePincode = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (value.length <= 6 && /^[0-9]*$/.test(value)) {
       setPin_Code(value);
     }
   };
 
-  const ApplyPincode = (e) => {
+  const ApplyPincode = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setPin_Code_Loader(true);
     UserService.PinCodeCheck({
@@ -118,7 +125,6 @@ const ReadyDesignCart = () => {
           setPin_Code_Loader(false);
         } else if (res?.status === "false") {
           setPin_Code_Err("Service available");
-          // setPin_Code_Msg("Service not available");
           setPin_Code_Valid(true);
           setPin_Code_Loader(false);
         }
@@ -127,6 +133,35 @@ const ReadyDesignCart = () => {
         console.log(err);
         setPin_Code_Valid(false);
         setPin_Code_Loader(false);
+      });
+  };
+
+  const Remove = (id: number) => {
+    setRemovingItemId(id);
+    const payload = id;
+    axios
+      .post(api + "ready/cart-remove", {
+        cart_id: id,
+      })
+      .then((res) => {
+        if (res?.data?.status === true) {
+          GetUserCartList();
+          toast.success(res?.data?.message);
+          if (res?.data?.data?.total_quantity === 0) {
+            localStorage.removeItem("dealerDiscount");
+            localStorage.removeItem("dealermessage");
+          }
+          removeFromCartDispatch({
+            type: "REMOVE_FROM_CART",
+            payload,
+          });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      })
+      .finally(() => {
+        setRemovingItemId(null);
       });
   };
 
@@ -162,40 +197,7 @@ const ReadyDesignCart = () => {
       });
   };
 
-  const Remove = (id) => {
-    setRemovingItemId(id);
-    const payload = id;
-    axios
-      .post(api + "ready/cart-remove", {
-        cart_id: id,
-      })
-      .then((res) => {
-        if (res?.data?.status === true) {
-          GetUserCartList();
-          toast.success(res?.data?.message);
-          if (res?.data?.data?.total_quantity === 0) {
-            localStorage.removeItem("dealerDiscount");
-            localStorage.removeItem("dealermessage");
-          }
-          removeFromCartDispatch({
-            type: "REMOVE_FROM_CART",
-            payload,
-          });
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      })
-      .finally(() => {
-        setRemovingItemId(null);
-      });
-  };
-
-  useEffect(() => {
-    GetUserCartList();
-  }, [selectPaymentMethod]);
-
-  const numberFormat = (value) =>
+  const numberFormat = (value: number) =>
     new Intl.NumberFormat("en-IN")?.format(Math?.round(value));
 
   const SubAmount = () => {
@@ -1832,5 +1834,11 @@ console.log("helooooo")
     </>
   );
 };
+
+const ReadyDesignCart = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <ReadyDesignCartInner />
+  </Suspense>
+);
 
 export default ReadyDesignCart;

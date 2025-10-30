@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "build:ignore": "NEXT_IGNORE_ESLINT=true NEXT_IGNORE_TYPECHECK=true next build",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -11,6 +12,7 @@
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
     "@next/swc-linux-x64-gnu": "^16.0.1",
+    "@react-pdf/renderer": "^4.3.1",
     "@tanstack/react-query": "^5.90.5",
     "antd": "^5.27.6",
     "axios": "^1.12.2",

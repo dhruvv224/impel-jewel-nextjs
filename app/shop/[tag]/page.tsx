@@ -1,6 +1,6 @@
 'use client'; // ⬅️ REQUIRED: Uses state, context, useEffect, local storage, and custom hooks.
 
-import React, { useContext, useEffect, useState, useCallback } from "react";
+import React, { useContext, useEffect, useState, useCallback, Suspense } from "react";
 // ✅ Next.js App Router replacements for routing and URL state management
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation"; 
@@ -39,7 +39,7 @@ const debounce = (func, wait) => {
   };
 };
 
-const Shop = () => {
+const ShopTagPageInner = () => {
   const { dispatch: wishlistDispatch } = useContext(WishlistSystem);
   const { dispatch: removeWishlistDispatch } = useContext(WishlistSystem);
 
@@ -785,7 +785,7 @@ const Shop = () => {
                                       />
                                     ) : (
                                       <img
-                                        src="https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg?20200913095930"
+                                        src=""
                                         alt=""
                                         className="w-100"
                                       />
@@ -1075,4 +1075,10 @@ const Shop = () => {
   );
 };
 
-export default Shop;
+const ShopTagPage = () => (
+  <Suspense fallback={<div>Loading...</div>}>
+    <ShopTagPageInner />
+  </Suspense>
+);
+
+export default ShopTagPage;
