@@ -1,16 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   eslint: {
-    // Skip ESLint checks during builds
     ignoreDuringBuilds: true,
   },
   typescript: {
-    // Ignore TypeScript build errors (not recommended for production)
     ignoreBuildErrors: true,
   },
+  // ✅ Explicitly disable turbopack
   experimental: {
-    // ✅ Prevent Turbopack from being used during the Vercel build
     turbo: false,
+  },
+  webpack: (config) => {
+    // ✅ Ensure webpack is used
+    return config;
   },
 };
 
