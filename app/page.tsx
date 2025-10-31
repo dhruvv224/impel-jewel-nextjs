@@ -336,7 +336,6 @@ const Home = () => {
             <Swiper
               spaceBetween={30}
               effect={"fade"}
-              lazy={true}
               centeredSlides={true}
               loop={true}
               autoplay={{

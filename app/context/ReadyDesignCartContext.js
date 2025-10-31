@@ -1,7 +1,7 @@
 "use client"
 import React, { createContext, useEffect, useReducer } from "react";
 import axios from "axios";
-const api = process.env.REACT_APP_API_KEY;
+const api = process.env.NEXT_PUBLIC_API_KEY || process.env.REACT_APP_API_KEY;
 
 export const ReadyDesignCartSystem = createContext();
 
@@ -79,13 +79,16 @@ const ReadyDesignCartProvider = ({ children }) => {
 
   const fetchCartData = async () => {
     try {
-      if (Phone) {
+      if (Phone && api) {
         const res = await axios.post(api + "ready/cart-list", { phone: Phone });
         const cartData = res?.data?.data?.carts || [];
         dispatch({ type: "SET_CART", payload: { cart: cartData } });
       }
     } catch (err) {
+      // Silently handle errors - API might not be available or endpoint might be wrong
       console.error("Error fetching cart items:", err);
+      // Dispatch empty cart on error to prevent UI issues
+      dispatch({ type: "SET_CART", payload: { cart: [] } });
     }
   };
 

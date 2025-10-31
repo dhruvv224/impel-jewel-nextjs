@@ -7,17 +7,31 @@ const BreadCrumb = (props) => {
     <div className="breadCrumb">
       <Breadcrumb>
         {props.firstName && (
-          <Breadcrumb.Item>
-            <Link href={props.firstUrl || "#"}>{props.firstName}</Link>
-          </Breadcrumb.Item>
+          <li className="breadcrumb-item">
+            {props.firstUrl ? (
+              <Link href={props.firstUrl} className="text-decoration-none">
+                {props.firstName}
+              </Link>
+            ) : (
+              props.firstName
+            )}
+          </li>
         )}
         {props.secondName && (
-          <Breadcrumb.Item>
-            <Link href={props.secondUrl || "#"}>{props.secondName}</Link>
-          </Breadcrumb.Item>
+          <li className="breadcrumb-item">
+            {props.secondUrl ? (
+              <Link href={props.secondUrl} className="text-decoration-none">
+                {props.secondName}
+              </Link>
+            ) : (
+              props.secondName
+            )}
+          </li>
         )}
         {props.thirdName && (
-          <Breadcrumb.Item active>{props.thirdName}</Breadcrumb.Item>
+          <li className="breadcrumb-item active" aria-current="page">
+            {props.thirdName}
+          </li>
         )}
       </Breadcrumb>
     </div>

@@ -11,8 +11,6 @@ import { CgSpinner } from "react-icons/cg";
 import toast from "react-hot-toast";
 import { ReadyDesignCartSystem } from "../context/ReadyDesignCartContext";
 import UserService from "../services/Cart";
-import Dropdown from "react-dropdown";
-import "react-dropdown/style.css";
 import { Col, Form, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
 import profileService from "../services/Auth";
 import { ProfileSystem } from "../context/ProfileContext";
@@ -66,8 +64,8 @@ const ReadyDesignCartInner = () => {
     setDealer_Code(e.target.value);
   };
 
-  const handleSelectPayment = (selectedOption: any) => {
-    setSelectPaymentMethod(selectedOption?.value);
+  const handleSelectPayment = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectPaymentMethod(event.target.value);
   };
 
   const Applycoupen = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -183,19 +181,32 @@ const ReadyDesignCartInner = () => {
   const removeCouping = <Tooltip id="tooltip">Remove Coupon</Tooltip>;
 
   const GetUserCartList = async () => {
+    if (!api || !phone) {
+      setIsLoading(false);
+      return;
+    }
     axios
       .post(api + "ready/cart-list", {
         phone: phone,
       })
       .then((res) => {
-        setItems(res?.data?.data?.carts);
+        setItems(res?.data?.data?.carts || []);
         setIsLoading(false);
       })
       .catch((err) => {
         console.log(err);
+        setItems([]);
         setIsLoading(false);
       });
   };
+
+  useEffect(() => {
+    if (phone) {
+      GetUserCartList();
+    } else {
+      setIsLoading(false);
+    }
+  }, [phone]);
 
   const numberFormat = (value: number) =>
     new Intl.NumberFormat("en-IN")?.format(Math?.round(value));
@@ -1112,13 +1123,11 @@ console.log("helooooo")
                                   </div>
                                   {Items?.map((data, index) => {
                                     return (
-                                      <>
-                                        <div className="col-md-3" key={index}>
+                                      <React.Fragment key={data?.id || data?.tag_no || index}>
+                                        <div className="col-md-3">
                                           <div className="d-flex">
                                             <Link
-                                              href={`/ready-to-dispatch/${4}/${
-                                                data?.tag_no
-                                              }`}
+                                              href={`/ready-to-dispatch/${data?.tag_no}`}
                                               className="nav-link"
                                             >
                                               <img
@@ -1133,7 +1142,7 @@ console.log("helooooo")
                                         <div className="col-md-4">
                                           <div className="cart_product_name">
                                             <Link
-                                              to={`/ready-to-dispatch/${data?.tag_no}`}
+                                              href={`/ready-to-dispatch/${data?.tag_no}`}
                                               className="nav-link"
                                             >
                                               <b>{data?.tag_no}</b>
@@ -1161,7 +1170,7 @@ console.log("helooooo")
                                         <div className="col-md-5">
                                           <div className="text-md-end">
                                             <Link
-                                              to="#"
+                                              href="#"
                                               className="btn btn-light border text-danger icon-hover-danger text-end"
                                               onClick={() => Remove(data.id)}
                                             >
@@ -1182,7 +1191,7 @@ console.log("helooooo")
                                         <div className="col-md-12">
                                           <hr className="mt-0" />
                                         </div>
-                                      </>
+                                      </React.Fragment>
                                     );
                                   })}
                                 </>
@@ -1300,7 +1309,7 @@ console.log("helooooo")
             placement="top"
             overlay={removeCouping}
           >
-            <Link className="icon" to="#">
+            <Link className="icon" href="#">
               <IoIosCloseCircleOutline
                 onClick={removeCoupon}
                 style={{
@@ -1380,16 +1389,24 @@ console.log("helooooo")
                               </div>
                                 <>
                                   <div className="mt-2">
-                                    <label htmlFor="Payment Method">
+                                    <label htmlFor="payment-method-select">
                                       Payment Method :
                                     </label>
-                                    <Dropdown
-                                      options={options}
-                                      placeholder="Select payment method"
+                                    <Form.Select
+                                      id="payment-method-select"
+                                      className="mt-1 w-100"
                                       value={selectPaymentMethod}
                                       onChange={handleSelectPayment}
-                                      className="mt-1 w-100"
-                                    />
+                                    >
+                                      <option value="" disabled>
+                                        Select payment method
+                                      </option>
+                                      {options.map((option) => (
+                                        <option key={option} value={option}>
+                                          {option}
+                                        </option>
+                                      ))}
+                                    </Form.Select>
                                   </div>
 
                                   <div className="pt-2">
@@ -1432,7 +1449,7 @@ console.log("helooooo")
                                       type="button"
                                       className="light-up-button w-100 rounded-2"
                                       onClick={() =>
-                                        navigate("/ready-to-dispatch")
+                                        router.push("/ready-to-dispatch")
                                       }
                                     >
                                       Back to shop
@@ -1473,7 +1490,7 @@ console.log("helooooo")
 
                             <div className="text-center">
                               <Link
-                                to={"/ready-to-dispatch"}
+                                href="/ready-to-dispatch"
                                 className="view_all_btn px-4 py-2"
                                 style={{ borderRadius: "8px" }}
                               >

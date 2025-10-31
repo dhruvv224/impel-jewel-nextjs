@@ -1,9 +1,10 @@
 "use client"
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 // import "./CreatePDF.css";
 import DealerPdf from "../services/Dealer/PdfShare";
 import toast from "react-hot-toast";
 import Loader from "../components/common/Loader";
+import Head from "next/head";
 import Link from "next/link"; 
 import { CgSpinner } from "react-icons/cg";
 import { FaLongArrowAltLeft } from "react-icons/fa";
@@ -108,36 +109,68 @@ const styles = StyleSheet.create({
     marginTop: 15,
     fontWeight: "bold",
   },
-});
+})
+
+type PdfItem = {
+  id: number;
+  name: string;
+  code: string;
+  image: string;
+  total_amount_18k: number;
+};
+
+type ReadyPdfItem = {
+  id: number;
+  name: string;
+  tag_no: string;
+  barcode: string;
+  image: string;
+  total_amount: number;
+};
+
+type PdfListResponse = {
+  data?: {
+    pdf_items?: PdfItem[];
+  };
+};
+
+type ReadyPdfListResponse = {
+  data?: {
+    ready_pdfs_list?: ReadyPdfItem[];
+  };
+};
 
 const CreatePDF = () => {
-  const DealerEmail = localStorage.getItem("email");
-  const [removingItemId, setRemovingItemId] = useState([]);
-  const [selectedProducts, setSelectedProducts] = useState([]);
-  const [selectedReadyProducts, setSelectedReadyProducts] = useState([]);
+  const [dealerEmail, setDealerEmail] = useState<string>("");
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setDealerEmail(localStorage.getItem("email") || "");
+      setIsClient(true);
+    }
+  }, []);
+  const [removingItemId, setRemovingItemId] = useState<(number | string)[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<number[]>([]);
+  const [selectedReadyProducts, setSelectedReadyProducts] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [selectReadyAll, setSelectReadyAll] = useState(false);
 
   const {
     data,
     isLoading: isPdfListLoading,
-    isError,
-    error,
     refetch: refetchPdfList,
-  } = useQuery({
-    queryKey: ["pdfList", DealerEmail],
-    queryFn: () => DealerPdf.pdfList({ email: DealerEmail }),
-    keepPreviousData: true,
-    onError: (err) => {
-      console.log("Error fetching pdf list:", err);
-    },
+  } = useQuery<PdfListResponse>({
+    queryKey: ["pdfList", dealerEmail],
+    queryFn: async () =>
+      (await DealerPdf.pdfList({ email: dealerEmail })) as PdfListResponse,
+    enabled: isClient && !!dealerEmail,
   });
 
-  const pdfLists = data?.data?.pdf_items || [];
+  const pdfLists: PdfItem[] = data?.data?.pdf_items ?? [];
 
-  const RemovePdf = (designIds) => {
+  const RemovePdf = (designIds: number[]) => {
     setRemovingItemId(designIds);
-    DealerPdf.removePdf({ email: DealerEmail, design_ids: designIds })
+    DealerPdf.removePdf({ email: dealerEmail, design_ids: designIds })
       .then((res) => {
         toast.success(res.message);
         refetchPdfList();
@@ -148,7 +181,7 @@ const CreatePDF = () => {
       });
   };
 
-  const handleCheckboxChange = (productId) => {
+  const handleCheckboxChange = (productId: number) => {
     setSelectedProducts((prevSelected) =>
       prevSelected.includes(productId)
         ? prevSelected.filter((id) => id !== productId)
@@ -178,18 +211,16 @@ const CreatePDF = () => {
     data: readyPdfDatas,
     isLoading: isReadyPdfListLoading,
     refetch: refetchReadyPdfList,
-  } = useQuery({
-    queryKey: ["readyPdfList", DealerEmail],
-    queryFn: () => DealerPdf.readyPdfList({ email: DealerEmail }),
-    keepPreviousData: true,
-    onError: (err) => {
-      console.log("Error fetching ready pdf list:", err);
-    },
+  } = useQuery<ReadyPdfListResponse>({
+    queryKey: ["readyPdfList", dealerEmail],
+    queryFn: async () =>
+      (await DealerPdf.readyPdfList({ email: dealerEmail })) as ReadyPdfListResponse,
+    enabled: isClient && !!dealerEmail,
   });
 
-  const readyPdfLists = readyPdfDatas?.data?.ready_pdfs_list || [];
+  const readyPdfLists: ReadyPdfItem[] = readyPdfDatas?.data?.ready_pdfs_list ?? [];
 
-  const ReadyRemovePdf = (designIds) => {
+  const ReadyRemovePdf = (designIds: string[]) => {
     setRemovingItemId(designIds);
     DealerPdf.readyRemovePdf({ design_ids: designIds })
       .then((res) => {
@@ -201,7 +232,7 @@ const CreatePDF = () => {
       });
   };
 
-  const handleReadyCheckboxChange = (productId) => {
+  const handleReadyCheckboxChange = (productId: string) => {
     setSelectedReadyProducts((prevSelected) =>
       prevSelected.includes(productId)
         ? prevSelected.filter((id) => id !== productId)
@@ -227,7 +258,7 @@ const CreatePDF = () => {
     setSelectReadyAll(!selectReadyAll);
   };
 
-  const numberFormat = (value) =>
+  const numberFormat = (value: number) =>
     new Intl.NumberFormat("en-IN")?.format(Math?.round(value));
 
   const pdfDataPrint = () => {
@@ -309,11 +340,21 @@ const CreatePDF = () => {
     return <Document>{pages}</Document>;
   };
 
+  if (!isClient) {
+    return (
+      <section className="wishlist">
+        <div className="container py-5 text-center">
+          <Loader />
+        </div>
+      </section>
+    );
+  }
+
   return (
     <>
-      <Helmet>
+      <Head>
         <title>Impel Store - Dealer PDF Share</title>
-      </Helmet>
+      </Head>
       <section className="wishlist">
         <div className="container">
           {isReadyPdfListLoading && isPdfListLoading ? (

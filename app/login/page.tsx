@@ -1,15 +1,31 @@
 
 "use client";
 import React, { useEffect, useState } from "react";
-import OTPInput from "otp-input-react";
-import PhoneInput from "react-phone-input-2";
-import "react-phone-input-2/lib/style.css";
+import dynamic from "next/dynamic";
 import toast from "react-hot-toast";
 import { CgSpinner } from "react-icons/cg";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import profileService from '../services/Auth' // Uncomment and adjust path if needed
+import profileService from "../services/Auth"; // Uncomment and adjust path if needed
+
+const PhoneInput = dynamic(() => import("../components/PhoneInputClient"), {
+  ssr: false,
+  loading: () => (
+    <input
+      className="form-control"
+      disabled
+      placeholder="Loading phone input..."
+    />
+  ),
+});
+
+const OTPInput = dynamic(() => import("../components/OtpInputClient"), {
+  ssr: false,
+  loading: () => (
+    <input className="form-control text-center" disabled placeholder="------" />
+  ),
+});
 
 const Login = () => {
   const router = useRouter();
@@ -19,6 +35,7 @@ const Login = () => {
   const [phoneError, setPhoneError] = useState<string>("");
   const [spinner, setSpinner] = useState<boolean>(false);
   const [phonedata, setPhoneData] = useState<any>(null);
+
   const handlePhoneNumberChange = (newPhoneNumber: string) => {
     let isValid = true;
     if (!newPhoneNumber) {
@@ -121,6 +138,7 @@ const Login = () => {
       sessionStorage.setItem("currentPath", window.location.pathname);
     }
   }, []);
+
   return (
     <section className="login">
       <div className="container">
@@ -244,4 +262,8 @@ const Login = () => {
   );
 };
 
-export default Login;
+const LoginPage = dynamic(() => Promise.resolve(Login), {
+  ssr: false,
+});
+
+export default LoginPage;

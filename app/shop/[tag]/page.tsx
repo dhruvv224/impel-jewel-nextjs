@@ -50,12 +50,20 @@ const ShopTagPageInner = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // ❌ Original: const { tag_id } = location.state || {}; // State is discouraged in App Router; use URL.
+  // SSR-safe localStorage access
+  const [userType, setUserType] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [Phone, setPhone] = useState<string>("");
 
-  const userType = localStorage.getItem("user_type");
-  const userId = localStorage.getItem("user_id");
-  const email = localStorage.getItem("email");
-  const Phone = localStorage.getItem("phone");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setUserType(localStorage.getItem("user_type") || "");
+      setUserId(localStorage.getItem("user_id") || "");
+      setEmail(localStorage.getItem("email") || "");
+      setPhone(localStorage.getItem("phone") || "");
+    }
+  }, []);
 
   const [isLoading, setIsLoading] = useState(true);
   const [filterData, setFilterData] = useState([]);
@@ -294,11 +302,18 @@ const ShopTagPageInner = () => {
     const currentGender = searchParams.get("gender_id");
     const currentMinPrice = searchParams.get("min_price");
     const currentMaxPrice = searchParams.get("max_price");
+    const currentTagId = searchParams.get("tag_id"); // ✅ Get tag_id from query params
 
-    // The tag ID logic remains tied to the URL path slug
-    const currentTag = filterTag.find(
-      (tag) => tag.name.toLowerCase() === tagNameFromUrl?.toLowerCase()
-    )?.id || null;
+    // The tag ID logic: first try query param, then try to find from URL path slug
+    let finalTagId = null;
+    if (currentTagId) {
+      finalTagId = Number(currentTagId);
+    } else if (filterTag && filterTag.length > 0 && tagNameFromUrl) {
+      const currentTag = filterTag.find(
+        (tag) => tag?.name?.toLowerCase() === tagNameFromUrl?.toLowerCase()
+      )?.id || null;
+      finalTagId = currentTag ? Number(currentTag) : null;
+    }
 
     if (currentPageNo) {
       setPagination((prev) => ({ ...prev, currentPage: currentPageNo }));
@@ -310,7 +325,7 @@ const ShopTagPageInner = () => {
       const filterResponse = await ShopServices.allfilterdesigns({
         category_id: Number(currentCategory) || null,
         gender_id: Number(currentGender) || null,
-        tag_id: Number(tag_id || currentTag) || null,
+        tag_id: finalTagId,
         search: currentSearch,
         min_price: Number(currentMinPrice) || null,
         max_price: Number(currentMaxPrice) || null,

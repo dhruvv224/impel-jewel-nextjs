@@ -13,25 +13,19 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 // This component encapsulates all client-side logic and context providers.
 export default function Providers({ children }: { children: React.ReactNode }) {
-  // Use the template literal syntax inside this Client Component
-  // to ensure consistent rendering between the server (initial pass) and client (hydration).
-  const bodyClassName = ' antialiased'; 
-
   return (
-    <body >
-      <CartProvider>
-        <WishlistProvider>
-          <ProfileProvider>
-            <ReadyDesignCartProvider>
-              <Navbar />
-              <QueryProvider>
-                {children}
-                <Footer />
-              </QueryProvider>
-            </ReadyDesignCartProvider>
-          </ProfileProvider>
-        </WishlistProvider>
-      </CartProvider>
-    </body>
+    <CartProvider>
+      <WishlistProvider>
+        <ProfileProvider>
+          <ReadyDesignCartProvider>
+            <Navbar />
+            <QueryProvider>
+              {children}
+              <Footer />
+            </QueryProvider>
+          </ReadyDesignCartProvider>
+        </ProfileProvider>
+      </WishlistProvider>
+    </CartProvider>
   );
 }
