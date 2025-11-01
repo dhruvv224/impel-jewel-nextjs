@@ -17,7 +17,8 @@ import { ProfileSystem } from "../context/ProfileContext";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-
+import Dropdown from "react-dropdown";
+import "react-dropdown/style.css"
 const api = process.env.NEXT_PUBLIC_API_KEY;
 
 const ReadyDesignCartInner = () => {
@@ -37,6 +38,7 @@ const ReadyDesignCartInner = () => {
       setPhone(localStorage.getItem("phone") || "");
     }
   }, []);
+  console.log(phone,'phone >>>')
 
   // Fix context usage
   const { dispatch: removeFromCartDispatch } = useContext(ReadyDesignCartSystem as any);
@@ -64,8 +66,8 @@ const ReadyDesignCartInner = () => {
     setDealer_Code(e.target.value);
   };
 
-  const handleSelectPayment = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectPaymentMethod(event.target.value);
+  const handleSelectPayment = (selectedOption: { value: string; label: string }) => {
+    setSelectPaymentMethod(selectedOption.value);
   };
 
   const Applycoupen = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -676,6 +678,7 @@ const ReadyDesignCartInner = () => {
   const [spinner, setSpinner] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [profileData, setProfileData] = useState([]);
+  console.log(profileData,'profileData')
   const [selectedData, setSelectedData] = useState([]);
   const [city, setcity] = useState();
   const [shipping_city, setShipping_city] = useState();
@@ -699,6 +702,7 @@ const ReadyDesignCartInner = () => {
     states: "",
     address_same_as_company: "",
   });
+  console.log(userData,'userData >>>')
   const [error, setError] = useState({
     nameErr: "",
     emailErr: "",
@@ -739,21 +743,21 @@ const ReadyDesignCartInner = () => {
   await profileService
     .getProfile({ phone: phone })
     .then((res) => {
-      const Billing_shipping_state = res.data.state.name;
-      const Billing_shipping_city = res.data.city.name;
-      const shipping_state_name = res.data.shipping_state.name;
-      const shipping_city_name = res.data.shipping_city.name;
-      
+      const Billing_shipping_state = res?.data?.state?.name;
+      const Billing_shipping_city = res?.data?.city?.name;
+      const shipping_state_name = res?.data?.shipping_state?.name;
+      const shipping_city_name = res?.data?.shipping_city?.name;
+      console.log(res.data,'res.data')
       setProfileData({
         ...res.data,
         state_name: Billing_shipping_state,
         city_name: Billing_shipping_city,
         shipping_state_name: shipping_state_name,
         shipping_city_name: shipping_city_name,
-        state: res.data.state.id,        // State ID
-        city: res.data.city.id,           // City ID
-        shipping_state: res.data.shipping_state.id,  // Shipping state ID
-        shipping_city: res.data.shipping_city.id,    // Shipping city ID
+        state: res?.data?.state?.id,        // State ID
+        city: res?.data?.city?.id,           // City ID
+        shipping_state: res?.data?.shipping_state?.id,  // Shipping state ID
+        shipping_city: res?.data?.shipping_city?.id,    // Shipping city ID
       });
       
       setUserData({
@@ -762,15 +766,15 @@ const ReadyDesignCartInner = () => {
         city_name: Billing_shipping_city,
         shipping_state_name: shipping_state_name,
         shipping_city_name: shipping_city_name,
-        state: res.data.state.id,       
-        city: res.data.city.id,          
-        shipping_state: res.data.shipping_state.id, 
-        shipping_city: res.data.shipping_city.id,   
+        state: res?.data?.state?.id,       
+        city: res?.data?.city?.id,          
+        shipping_state: res?.data?.shipping_state?.id, 
+        shipping_city: res?.data?.shipping_city?.id,   
       });
       
-      res.data.state.id && fetchCity(res.data.state.id);
-      res.data.shipping_state.id &&
-        fetchShippingCity(res.data.shipping_state.id);
+      res?.data?.state?.id && fetchCity(res?.data?.state?.id);
+      res?.data?.shipping_state?.id &&
+        fetchShippingCity(res?.data?.shipping_state?.id);
       setIsLoading(false);
     })
     .catch((err) => {
@@ -784,8 +788,10 @@ useEffect(() => {
   }
 }, [userData.shipping_state]);
   useEffect(() => {
-    getProfile();
-  }, []);
+    if (phone) {
+      getProfile();
+    }
+  }, [phone]);
 
   const isValidPan = (panNumber) => {
     const panRegex = /[A-Z]{5}[0-9]{4}[A-Z]{1}/;
@@ -1081,8 +1087,9 @@ const DiscountAmount = () => {
 const SubTotalAfterDiscount = () => {
   return SubAmount() - DiscountAmount();
 };
-console.log("helooooo")
-  return (
+useEffect(() => {
+  GetUserCartList();
+}, [selectPaymentMethod]);  return (
     <>
       <Head>
         <title>Impel Store - Ready products cart</title>
@@ -1204,7 +1211,7 @@ console.log("helooooo")
                             <div className="card mb-3 border shadow-0">
                               <div className="card-body">
                                 <form>
-                                  <div className="form-group">
+                                <div className="form-group">
                                     <label className="form-label">
                                       Have a Dealer coupon?
                                     </label>
@@ -1388,25 +1395,17 @@ console.log("helooooo")
                                 </form>
                               </div>
                                 <>
-                                  <div className="mt-2">
-                                    <label htmlFor="payment-method-select">
+                                <div className="mt-2">
+                                    <label htmlFor="Payment Method">
                                       Payment Method :
                                     </label>
-                                    <Form.Select
-                                      id="payment-method-select"
-                                      className="mt-1 w-100"
+                                    <Dropdown
+                                      options={options}
+                                      placeholder="Select payment method"
                                       value={selectPaymentMethod}
                                       onChange={handleSelectPayment}
-                                    >
-                                      <option value="" disabled>
-                                        Select payment method
-                                      </option>
-                                      {options.map((option) => (
-                                        <option key={option} value={option}>
-                                          {option}
-                                        </option>
-                                      ))}
-                                    </Form.Select>
+                                      className="mt-1 w-100"
+                                    />
                                   </div>
 
                                   <div className="pt-2">

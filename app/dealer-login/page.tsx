@@ -57,6 +57,9 @@ const DealerLogin = () => {
           localStorage.setItem("user_id", response?.data?.user?.id);
           localStorage.setItem("user_type", response?.data?.user?.user_type);
           localStorage.setItem("email", response?.data?.user?.email);
+          
+          // Dispatch custom event to notify Navbar about auth state change
+          window.dispatchEvent(new Event("authStateChanged"));
         }
         router.push("/");
       } else {

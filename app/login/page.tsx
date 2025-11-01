@@ -108,6 +108,12 @@ const Login = () => {
           localStorage.setItem("user_type", phonedata?.user_type);
           localStorage.setItem("user_id", phonedata?.user_id);
           localStorage.setItem("verification", phonedata?.verification);
+          
+          // Dispatch custom event to notify Navbar about auth state change
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new Event("authStateChanged"));
+          }
+          
           const redirectPath = localStorage.getItem("redirectPath");
           localStorage.removeItem("redirectPath");
           localStorage.removeItem("showPopup");

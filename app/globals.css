@@ -2255,21 +2255,7 @@ input[type="file"] {
     padding: 10px 40px;
   }
 
-  .navbar-collapse {
-    position: absolute;
-    top: 100px;
-    left: -100%;
-    width: 180px;
-    background-color: #fff;
-    opacity: 0;
-    padding: 0;
-    top: 75px;
-    left: 0;
-    opacity: 1;
-    z-index: 999 !important;
-    animation: navbaropen 0.3s ease-out;
-    height: auto !important;
-  }
+  /* Removed duplicate conflicting styles - handled in the @media query above */
 
   @keyframes navbaropen {
     0% {
@@ -2456,18 +2442,23 @@ input[type="file"] {
     width: 100%;
     /* Override width: 180px from original CSS to use full width */
     height: auto !important;
+    max-height: 0;
+    overflow: hidden;
     background-color: #fff;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
     z-index: 998; /* Below the sticky header */
-    transform: translateY(0); /* Default position for hidden menu */
+    transform: translateY(-10px);
     visibility: hidden;
     opacity: 0;
-    transition: 0.3s ease-out;
+    transition: all 0.3s ease-out;
   }
 
   .navbar-collapse.show {
     visibility: visible;
     opacity: 1;
+    max-height: 1000px;
+    transform: translateY(0);
+    padding: 15px 0;
   }
 
   /* Menu items should stack vertically on mobile */

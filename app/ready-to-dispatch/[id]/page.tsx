@@ -38,7 +38,7 @@ const ReadyDetails = ({ params }) => {
   const currentPath = usePathname();
   // Use slug from URL (prioritize dynamic route segment if present, otherwise search param)
   // This ensures we get the item's identifier from the URL.
-  const routeId = 'GR22-635';
+  const routeId = params.id;
 
   // --- Client-Side State Initialization for localStorage values ---
   const [phone, setPhone] = useState(null);

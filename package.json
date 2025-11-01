@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build:ignore": "NEXT_IGNORE_ESLINT=true NEXT_IGNORE_TYPECHECK=true next build",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3001",
     "lint": "eslint"
   },
   "dependencies": {
@@ -18,12 +18,13 @@
     "bootstrap": "^5.3.8",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.24",
+    "geist": "^1.5.1",
     "next": "15.1.6",
-"react": "18.3.1",
-"react-dom": "18.3.1"
-,
     "otp-input-react": "^0.3.0",
+    "react": "18.3.1",
     "react-bootstrap": "^2.10.10",
+    "react-dom": "18.3.1",
+    "react-dropdown": "^1.11.0",
     "react-google-recaptcha": "^3.1.0",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",

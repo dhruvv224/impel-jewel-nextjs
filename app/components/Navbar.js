@@ -78,6 +78,42 @@ const Navbar = () => {
     }
   }, []);
 
+  // --- Update auth state on route changes (e.g., after login) ---
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setDealer(localStorage.getItem("token"));
+      setDealerEmail(localStorage.getItem("email"));
+      setPhone(localStorage.getItem("phone"));
+    }
+  }, [currentRoute]);
+
+  // --- Listen for storage events (cross-tab updates) and custom login events ---
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleStorageChange = (e) => {
+      if (e.key === "token" || e.key === "phone" || e.key === "email") {
+        setDealer(localStorage.getItem("token"));
+        setDealerEmail(localStorage.getItem("email"));
+        setPhone(localStorage.getItem("phone"));
+      }
+    };
+
+    const handleAuthUpdate = () => {
+      setDealer(localStorage.getItem("token"));
+      setDealerEmail(localStorage.getItem("email"));
+      setPhone(localStorage.getItem("phone"));
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener("authStateChanged", handleAuthUpdate);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("authStateChanged", handleAuthUpdate);
+    };
+  }, []);
+
   // --- 2. Data Fetching Functions ---
 
   const Tags = () => {
@@ -164,6 +200,14 @@ const Navbar = () => {
 
     clearLocalStorage();
     
+    // Update state immediately after logout
+    setDealer(null);
+    setDealerEmail(null);
+    setPhone(null);
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event("authStateChanged"));
+    
     // Use router.push for navigation
     if (Dealer) {
       router.push("/dealer-login");
@@ -224,6 +268,11 @@ const Navbar = () => {
     setIsCollapsed(!isCollapsed);
     setTagDropdown(false);
   };
+
+  const handleLinkClick = () => {
+    setIsCollapsed(true);
+    setTagDropdown(false);
+  };
   
   const handleScroll = () => {
     if (typeof window === 'undefined') return;
@@ -257,8 +306,6 @@ const Navbar = () => {
               className="navbar-toggler"
               type="button"
               onClick={handleNavClick}
-              data-bs-toggle="collapse"
-              data-bs-target="#navbarSupportedContent"
               aria-controls="navbarSupportedContent"
               aria-expanded={!isCollapsed}
               aria-label="Toggle navigation"
@@ -284,7 +331,7 @@ const Navbar = () => {
                     }
                     aria-current="page"
                     href="/"
-                    onClick={handleNavClick}
+                    onClick={handleLinkClick}
                   >
                     Home
                   </Link>
@@ -299,7 +346,7 @@ const Navbar = () => {
                     }
                     aria-current="page"
                     href="/ready-to-dispatch"
-                    onClick={handleNavClick}
+                    onClick={handleLinkClick}
                   >
                     Ready Jewellery
                   </Link>
@@ -341,17 +388,13 @@ const Navbar = () => {
                             {tags?.map((multitags, index) => {
                                 // Construct Next.js dynamic path
                                 const tagSlug = encodeURIComponent(multitags.name.toLowerCase().replace(/\s+/g, '-'));
-                                const linkPath = `/shop/${tagSlug}`;
+                                const linkPath = `/shop/${tagSlug}?tag_id=${multitags?.id}`;
                                 
                                 return(
                                     <div className="col-md-2" key={index}>
                                         <div className="tags-links">
-                                            {/* Passed ID as query param */}
                                             <Link
-                                            href={{
-                                                pathname: linkPath,
-                                                query: { tag_id: multitags?.id }
-                                            }}
+                                            href={linkPath}
                                             className="nav-link"
                                             onClick={handleNavClick}
                                             >
@@ -407,7 +450,7 @@ const Navbar = () => {
                         : "nav-link"
                     }
                     href="/customization"
-                    onClick={handleNavClick}
+                    onClick={handleLinkClick}
                   >
                     Customization
                   </Link>
