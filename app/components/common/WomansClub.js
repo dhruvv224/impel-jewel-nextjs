@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./WomansClub.css";
-import homeService from ".././";
+import homeService from "../../services/Home";
 import toast from "react-hot-toast";
 import { CgSpinner } from "react-icons/cg";
 import { CloseOutlined } from "@ant-design/icons";

@@ -31,7 +31,7 @@ import "./globals.css";
 // Local asset imports are fine, Next.js handles them
 // Assuming WomansClub is a regular component, if it contains browser APIs, 
 // it might need dynamic import too, but for now, we assume it's safe.
-// import WomansClub from "./components/common/WomansClub"; 
+import WomansClub from "./components/common/WomansClub"; 
 
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
@@ -54,7 +54,6 @@ const Home = () => {
 
   // Popup state
   const [showPopup, setShowPopup] = useState(false);
-  console.log(showPopup,":::showPopup")
   const [popupTimer, setPopupTimer] = useState(0);
   
   // Removed videoEl logic as it requires complex SSR handling 
@@ -129,7 +128,6 @@ const Home = () => {
   });
   
   // Corrected console.log to show the actual object data
-  console.log(":::popupData", popupData); 
   // console.log(popupData,":::") // Removed for production code
   
   // Set popup timer from fetched data
@@ -331,7 +329,7 @@ const Home = () => {
         </div>
       )}
 
-      {/* <WomansClub /> */}
+      <WomansClub />
       {/* Hero Banner */}
       <section className="banner position-relative">
         {isBannerLoading ? (
