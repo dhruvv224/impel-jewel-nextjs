@@ -49,7 +49,7 @@ const Footer = () => {
                     pathname === page?.slug ? "active" : ""
                   }`}
                 >
-                  <Link href={page?.slug}>
+                  <Link href={page?.slug || '#'}>
                     <b>{page?.name}</b>
                   </Link>
                 </li>

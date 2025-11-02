@@ -23,22 +23,56 @@ const CustomPage = () => {
 
   // ✅ App Router: Use useParams to get dynamic path segments (e.g., in app/[id]/page.js)
   const params = useParams();
-  const id = params.id; 
+  // Next.js useParams automatically decodes URL-encoded path segments
+  // For slugs with special characters like &, ensure proper decoding
+  // Handle both string and string[] cases
+  const rawIdParam = params.id;
+  const rawId = Array.isArray(rawIdParam) ? rawIdParam[0] || '' : rawIdParam || '';
+  
+  // Decode the slug to handle special characters like &
+  // Next.js should decode automatically, but handle cases where it might not
+  let id = rawId;
+  try {
+    // Always try to decode in case Next.js didn't decode it (shouldn't happen, but safe)
+    id = decodeURIComponent(rawId);
+  } catch (e) {
+    // If decoding fails (already decoded or no encoding needed), use as-is
+    id = rawId;
+  }
+  
+  // Debug log to verify slug
+  React.useEffect(() => {
+    if (id) {
+      console.log('CustomPage - Raw slug from params:', rawId);
+      console.log('CustomPage - Decoded slug:', id);
+    }
+  }, [id, rawId]);
   
   // NOTE: If you were passing the slug as a query, you'd use:
   // const searchParams = useSearchParams();
   // const id = searchParams.get('slug'); 
 
   // Only run the query if the router has populated the `id`
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["CustomPages", id],
-    queryFn: () => profileService.CustomPages({ page_slug: id }),
-    keepPreviousData: true,
+    queryFn: () => {
+      // Ensure the slug is sent correctly to the API without double-encoding
+      const slug = id || '';
+      console.log('Sending slug to API:', slug); // Debug log
+      return profileService.CustomPages({ page_slug: slug });
+    },
+    placeholderData: (previousData) => previousData,
     enabled: !!id, // Only run the query when 'id' is available
-    onError: (err) => console.log("Error fetching page details:", err),
   });
+  
+  // Log errors separately
+  React.useEffect(() => {
+    if (error) {
+      console.log("Error fetching page details:", error);
+    }
+  }, [error]);
 
-  const { name, image, content } = data?.data || {};
+  const { name, image, content } = (data as any)?.data || {};
 
   // Construct the canonical URL and Open Graph URL
   // NOTE: This logic for canonicalUrl is complex in the Client Component.
