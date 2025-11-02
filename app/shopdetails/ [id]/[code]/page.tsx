@@ -33,7 +33,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 
 import auth925 from "../../assets/images/Tags/Auth925.png";
 
-const ShopDetailsInner = () => {
+export const ShopDetailsInner = ({ params }: { params: { id: string; code: string } }) => {
   // ❌ Original: const location = useLocation();
   // ❌ Original: const navigate = useNavigate();
   
@@ -41,13 +41,22 @@ const ShopDetailsInner = () => {
   const router = useRouter(); 
   const pathname = usePathname(); // Equivalent to location.pathname
   const searchParams = useSearchParams(); 
-  // ❌ Original: const { id } = useParams();
-  // We use searchParams to get the ID since the original component used location.state/URL params heavily.
-  const id = searchParams.get('id'); 
+  // ✅ Get id and code from route params first, fallback to searchParams
+  // Handle both URL patterns: /shopdetails/id/code and /shopdetails/id?code=...
+  const routeId = params?.id || '';
+  const routeCode = params?.code || '';
+  const queryId = searchParams.get('id') || '';
+  const queryCode = searchParams.get('code') || '';
+  
+  // Use route params if available, otherwise use query params
+  // If routeId is the product name (slug), prefer queryId for the actual product ID
+  const id = queryId || routeId || '';
+  const code = routeCode || queryCode || ''; 
 
   // ❌ Original: const { id: categoryIdFromState, name: categoryNameFromState } = location.state || {};
   // Now fetching dynamic data from URL query params. Adjust this based on your actual URL structure.
-  const categoryIdFromState = searchParams.get('categoryId') || id; 
+  // Use id (which comes from query params or route params) for fetching product details
+  const categoryIdFromState = searchParams.get('categoryId') || searchParams.get('id') || id || ''; 
   const categoryNameFromState = searchParams.get('categoryName'); 
   
   const { dispatch: wishlistDispatch } = useContext(WishlistSystem);
@@ -77,9 +86,8 @@ const ShopDetailsInner = () => {
       productDetail.product_detail({
         id: categoryIdFromState,
       }),
-    keepPreviousData: true,
     enabled: !!categoryIdFromState, // Only run the query if the ID is present
-    onError: (err) => {
+    onError: (err: any) => {
       console.log("Error fetching products details:", err);
     },
   });
@@ -1226,9 +1234,9 @@ const ShopDetailsInner = () => {
   );
 };
 
-const ShopDetails = () => (
+const ShopDetails = ({ params }: { params: { id: string; code: string } }) => (
   <Suspense fallback={<div>Loading...</div>}>
-    <ShopDetailsInner />
+    <ShopDetailsInner params={params} />
   </Suspense>
 );
 

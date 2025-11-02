@@ -230,11 +230,14 @@ const Profile = () => {
   };
 
   const pincodeRegex = /^\d{6}$/;
+  // const isValidPan = (panNumber: string) => {
+  //   const panRegex = /[A-Z]{5}[0-9]{4}[A-Z]{1}/;
+  //   return panRegex.test(panNumber);
+  // };
   const isValidPan = (panNumber: string) => {
     const panRegex = /[A-Z]{5}[0-9]{4}[A-Z]{1}/;
     return panRegex.test(panNumber);
   };
-
   const validateForm = () => {
     let isValid = true;
     const validationErrors = { ...error };

@@ -81,7 +81,7 @@ const ReadytoDispatchInner = () => {
       } else {
         queryParams.delete("search");
       }
-      router.push(`/ready-to-dispatch?${queryParams.toString()}`);
+      router.replace(`/ready-to-dispatch?${queryParams.toString()}`, { scroll: false });
       setPagination((prev) => ({ ...prev, currentPage: 1 }));
     }, 500)
   );
@@ -102,7 +102,7 @@ const ReadytoDispatchInner = () => {
     }
 
     // ✅ Update URL with new query params
-    router.push(`/ready-to-dispatch?${queryParams.toString()}`);
+    router.replace(`/ready-to-dispatch?${queryParams.toString()}`, { scroll: false });
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
 
     // ✅ Update local state
@@ -286,7 +286,7 @@ const ReadytoDispatchInner = () => {
       console.error(err);
       setIsLoading(false);
     }
-  }, [location.search]);
+  }, [searchParams.toString()]);
 
   // Fetch master groups
   const fetchMasterGroups = async () => {
@@ -326,7 +326,8 @@ const ReadytoDispatchInner = () => {
   // Fetch products and filters on location change
   useEffect(() => {
     getProductsFilterAndData();
-  }, [searchParams, getProductsFilterAndData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams.toString()]);
 
   // Clean up debounce timeout on component unmount
 
@@ -335,7 +336,7 @@ const ReadytoDispatchInner = () => {
   const updatePagination = (page) => {
     const queryParams = new URLSearchParams(searchParams.toString());
     queryParams.set("page", page);
-    router.push(`/ready-to-dispatch?${queryParams.toString()}`);
+    router.replace(`/ready-to-dispatch?${queryParams.toString()}`, { scroll: false });
     setPagination((prev) => ({ ...prev, currentPage: page }));
     setIsLoading(true);
     scrollup();

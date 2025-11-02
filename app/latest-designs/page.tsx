@@ -73,7 +73,7 @@ const LatestDesign = () => {
                       {/* Limit data rendering here to match previous behavior */}
                       {designs?.slice(0, 200)?.map((data) => {
                         // Use a unique key for list items
-                        const imageSource = data?.image || NO_IMAGE_SRC;
+                        const imageSource = data?.image || '/assets/images/No_Image_Available.jpg';
                         const altText = data?.name || "Product Image";
                         
                         return (
