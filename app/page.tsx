@@ -54,6 +54,7 @@ const Home = () => {
 
   // Popup state
   const [showPopup, setShowPopup] = useState(false);
+  console.log(showPopup,":::showPopup")
   const [popupTimer, setPopupTimer] = useState(0);
   
   // Removed videoEl logic as it requires complex SSR handling 
@@ -124,21 +125,29 @@ const Home = () => {
   const { data: popupData } = useQuery({
     queryKey: ["popupData"], // Needs a unique query key
     queryFn: () => homeService.GetPopUpData(),
-    select: (data) => data?.data || [],
+    select: (data) => data?.data ,
   });
+  
+  // Corrected console.log to show the actual object data
+  console.log(":::popupData", popupData); 
   // console.log(popupData,":::") // Removed for production code
-
+  
   // Set popup timer from fetched data
   useEffect(() => {
     if (popupData?.[0]?.duration) {
       setPopupTimer(popupData[0].timer);
     }
-  }, [popupData]);
+  }, [popupData])
+
+  // console.log(popupData,":::") // Removed for production code
+
+  // Set popup timer from fetched data
+ 
 
   // Handle popup timer to show the popup (Client-side only logic)
   useEffect(() => {
     let timer;
-    if (typeof window !== 'undefined' && popupTimer > 0) {
+    if (typeof window !== 'undefined' ) {
       timer = setTimeout(() => {
         setShowPopup(true);
       }, popupTimer);
