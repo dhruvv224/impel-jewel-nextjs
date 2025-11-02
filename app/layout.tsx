@@ -15,8 +15,15 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "My App",
-  description: "Using Inter & JetBrains Mono globally",
+  title: "Impel Store",
+  description: "Find handcrafted heart pendants & earrings at Impel. Perfect for gifts, Valentine's & daily wear. Shop affordable heart jewelry online in India today.",
+  icons: {
+    icon: [
+      { url: "/IMPEL-FAV.png", type: "image/png" },
+    ],
+    shortcut: "/IMPEL-FAV.png",
+    apple: "/IMPEL-FAV.png",
+  },
 };
 
 export default function RootLayout({
