@@ -908,8 +908,8 @@ const Cart = () => {
                                     </div>
                                     {Items?.map((data, index) => {
                                       return (
-                                        <>
-                                          <div className="col-md-3" key={index}>
+                                        <React.Fragment key={data.id || index}>
+                                          <div className="col-md-3">
                                             <div className="d-flex">
                                               <Link
                                                 // ✅ Next.js Link uses 'href'
@@ -1014,7 +1014,7 @@ const Cart = () => {
                                           <div className="col-md-12">
                                             <hr className="mt-0" />
                                           </div>
-                                        </>
+                                        </React.Fragment>
                                       );
                                     })}
                                   </>

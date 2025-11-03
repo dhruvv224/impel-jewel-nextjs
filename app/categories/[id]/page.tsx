@@ -95,7 +95,7 @@ const CategoriesItemsInner = () => {
           <div className="categories_data">
             {isLoading ? (
               <>
-                <div className="row">
+                <div className="row g-4">
                   {shimmerItems.map((_, index) => (
                     <div className="col-lg-3 col-md-6 col-12" key={index}>
                       <div className="shimmer-product">
@@ -111,7 +111,7 @@ const CategoriesItemsInner = () => {
               <div>Error: {error?.message}</div>
             ) : (
               <>
-                <div className="row">
+                <div className="row g-4">
                   {categoriesData.length > 0 ? (
                     <>
                       {categoriesData.map((data: any) => {

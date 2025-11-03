@@ -17,8 +17,7 @@ import { ProfileSystem } from "../context/ProfileContext";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 import { Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
-import Dropdown from "react-dropdown";
-import "react-dropdown/style.css"
+import Select from "react-select";
 const api = process.env.NEXT_PUBLIC_API_KEY;
 
 const ReadyDesignCartInner = () => {
@@ -66,8 +65,10 @@ const ReadyDesignCartInner = () => {
     setDealer_Code(e.target.value);
   };
 
-  const handleSelectPayment = (selectedOption: { value: string; label: string }) => {
-    setSelectPaymentMethod(selectedOption.value);
+  const handleSelectPayment = (selectedOption: { value: string; label: string } | null) => {
+    if (selectedOption) {
+      setSelectPaymentMethod(selectedOption.value);
+    }
   };
 
   const Applycoupen = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -1073,7 +1074,9 @@ useEffect(() => {
   }, [profileData?.address_same_as_company]);
 
   const options =
-    overAllAmount > 50000 ? ["PhonePay"] : ["Cash on delivery", "PhonePay"];
+    overAllAmount > 50000 
+      ? [{ value: "PhonePay", label: "PhonePay" }] 
+      : [{ value: "Cash on delivery", label: "Cash on delivery" }, { value: "PhonePay", label: "PhonePay" }];
 const DiscountAmount = () => {
   if (code?.discount_value) {
     if (code?.discount_type === "percentage") {
@@ -1399,12 +1402,14 @@ useEffect(() => {
                                     <label htmlFor="Payment Method">
                                       Payment Method :
                                     </label>
-                                    <Dropdown
+                                    <Select
                                       options={options}
                                       placeholder="Select payment method"
-                                      value={selectPaymentMethod}
+                                      value={options.find(opt => opt.value === selectPaymentMethod) || null}
                                       onChange={handleSelectPayment}
-                                      className="mt-1 w-100"
+                                      className="mt-1"
+                                      classNamePrefix="select"
+                                      isSearchable={false}
                                     />
                                   </div>
 

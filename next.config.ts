@@ -20,6 +20,14 @@ const nextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://admin.impel.store/api/:path*',
+      },
+    ];
+  },
   webpack: (config) => {
     // ✅ Ensure webpack is used
     return config;

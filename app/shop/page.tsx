@@ -52,14 +52,16 @@ const ShopPageInner = () => {
 
   // ❌ Original: const { tag_id } = location.state || {}; // State is discouraged in App Router; use URL.
 
-  const userType = localStorage.getItem("user_type");
-  const userId = localStorage.getItem("user_id");
-  const email = localStorage.getItem("email");
-  const Phone = localStorage.getItem("phone");
+  // ✅ Initialize state for localStorage values (SSR-safe)
+  const [userType, setUserType] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [Phone, setPhone] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [filterData, setFilterData] = useState([]);
   const [paginate, setPaginate] = useState();
+  const [isMounted, setIsMounted] = useState(false);
   
   // Initialize state based on current URL search params
   const initialSearch = searchParams.get("search") || "";
@@ -310,13 +312,13 @@ const ShopPageInner = () => {
       const filterResponse = await ShopServices.allfilterdesigns({
         category_id: Number(currentCategory) || null,
         gender_id: Number(currentGender) || null,
-        tag_id: Number(tag_id || currentTag) || null,
+        tag_id: Number(currentTag) || null,
         search: currentSearch,
         min_price: Number(currentMinPrice) || null,
         max_price: Number(currentMaxPrice) || null,
         sort_by: currentSort || selectedOption?.value || null,
-        userType: Number(userType),
-        userId: Number(userId),
+        userType: userType ? Number(userType) : 0,
+        userId: userId ? Number(userId) : 0,
         page: currentPageNo,
       });
       setIsLoading(false);
@@ -433,6 +435,17 @@ const ShopPageInner = () => {
       scrollup();
     }
   };
+
+  // ✅ Set mounted state and load localStorage values on client side only (SSR-safe)
+  useEffect(() => {
+    setIsMounted(true);
+    if (typeof window !== 'undefined') {
+      setUserType(localStorage.getItem("user_type"));
+      setUserId(localStorage.getItem("user_id"));
+      setEmail(localStorage.getItem("email"));
+      setPhone(localStorage.getItem("phone"));
+    }
+  }, []);
 
   // 🛑 The main useEffect now depends only on Next.js URL state (pathname/searchParams)
   useEffect(() => {
@@ -656,27 +669,39 @@ const ShopPageInner = () => {
           <div className="shopping_data">
             <div className="row">
               <div className="col-lg-9 col-md-6 col-12 mb-lg-3 mb-md-3 mb-2">
-                <Select
-                  placeholder="Shop by category"
-                  isClearable={true}
-                  isSearchable={false}
-                  value={selectedCategory}
-                  options={categoryData.map((data) => ({
-                    value: data?.id,
-                    label: data?.name,
-                  }))}
-                  onChange={handleSelectCategory}
-                />
+                {isMounted ? (
+                  <Select
+                    placeholder="Shop by category"
+                    isClearable={true}
+                    isSearchable={false}
+                    value={selectedCategory}
+                    options={categoryData.map((data) => ({
+                      value: data?.id,
+                      label: data?.name,
+                    }))}
+                    onChange={handleSelectCategory}
+                  />
+                ) : (
+                  <div style={{ height: '38px', border: '1px solid #ccc', borderRadius: '4px', padding: '8px' }}>
+                    Shop by category
+                  </div>
+                )}
               </div>
               <div className="col-lg-3 col-md-6 col-12 mb-lg-3 mb-md-3 mb-2">
-                <Select
-                  value={selectedOption}
-                  onChange={handleSelectChange}
-                  isClearable={true}
-                  isSearchable={false}
-                  options={options}
-                  placeholder="Sort By"
-                />
+                {isMounted ? (
+                  <Select
+                    value={selectedOption}
+                    onChange={handleSelectChange}
+                    isClearable={true}
+                    isSearchable={false}
+                    options={options}
+                    placeholder="Sort By"
+                  />
+                ) : (
+                  <div style={{ height: '38px', border: '1px solid #ccc', borderRadius: '4px', padding: '8px' }}>
+                    Sort By
+                  </div>
+                )}
               </div>
             </div>
 
@@ -694,41 +719,59 @@ const ShopPageInner = () => {
                 </div>
               </div>
               <div className="col-lg-3 col-md-6 col-12 mb-lg-4 mb-md-3 mb-2">
-                <Select
-                  placeholder="Shop by Gender"
-                  isClearable
-                  isSearchable={false}
-                  value={selectedGender}
-                  options={genderData?.map((data) => ({
-                    value: data?.id,
-                    label: data?.name,
-                  }))}
-                  onChange={handleSelectGender}
-                />
+                {isMounted ? (
+                  <Select
+                    placeholder="Shop by Gender"
+                    isClearable
+                    isSearchable={false}
+                    value={selectedGender}
+                    options={genderData?.map((data) => ({
+                      value: data?.id,
+                      label: data?.name,
+                    }))}
+                    onChange={handleSelectGender}
+                  />
+                ) : (
+                  <div style={{ height: '38px', border: '1px solid #ccc', borderRadius: '4px', padding: '8px' }}>
+                    Shop by Gender
+                  </div>
+                )}
               </div>
               <div className="col-lg-3 col-md-6 col-12 mb-lg-4 mb-md-5 mb-2">
-                <Select
-                  placeholder="Shop by Tag"
-                  isClearable
-                  isSearchable={false}
-                  value={selectedTag}
-                  options={filterTag?.map((data) => ({
-                    value: data?.id,
-                    label: data?.name,
-                  }))}
-                  onChange={handleSelectTag}
-                />
+                {isMounted ? (
+                  <Select
+                    placeholder="Shop by Tag"
+                    isClearable
+                    isSearchable={false}
+                    value={selectedTag}
+                    options={filterTag?.map((data) => ({
+                      value: data?.id,
+                      label: data?.name,
+                    }))}
+                    onChange={handleSelectTag}
+                  />
+                ) : (
+                  <div style={{ height: '38px', border: '1px solid #ccc', borderRadius: '4px', padding: '8px' }}>
+                    Shop by Tag
+                  </div>
+                )}
               </div>
               <div className="col-lg-3 col-md-6 col-12 mb-lg-4 mb-md-5 mb-4">
-                <Select
-                  value={selectedPriceOption}
-                  onChange={handlePriceRangeChange}
-                  options={priceRangeOptions}
-                  isClearable
-                  placeholder="Select price range"
-                  className="basic-single"
-                  classNamePrefix="select"
-                />
+                {isMounted ? (
+                  <Select
+                    value={selectedPriceOption}
+                    onChange={handlePriceRangeChange}
+                    options={priceRangeOptions}
+                    isClearable
+                    placeholder="Select price range"
+                    className="basic-single"
+                    classNamePrefix="select"
+                  />
+                ) : (
+                  <div style={{ height: '38px', border: '1px solid #ccc', borderRadius: '4px', padding: '8px' }}>
+                    Select price range
+                  </div>
+                )}
               </div>
               <div className="col-lg-3 col-md-6 col-12 mb-lg-4 mb-md-3 mb-2">
                 <button className="btn btn-secondary w-100" onClick={clearFilters}>

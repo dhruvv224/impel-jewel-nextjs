@@ -1,21 +1,17 @@
 'use client';
 
-import { Suspense } from 'react';
-import ShopDetailsInner from '../ [id]/[code]/page';
+import { Suspense, use } from 'react';
+import { ShopDetailsInner } from '../ [id]/[code]/page';
 
 // This page handles single-segment URLs like /shopdetails/earring?id=4935&code=BT5129
 // The component reads id and code from query params, so we pass empty code in params
-const ShopDetailsSingleSegment = ({ params }: { params: { id: string } }) => {
-  // Create a wrapper that passes the params to ShopDetailsInner
-  // Since ShopDetailsInner expects { id, code }, we pass code as empty
-  // and it will read the actual code from query params
-  const WrappedComponent = () => {
-    return <ShopDetailsInner params={{ id: params.id, code: '' }} />;
-  };
+const ShopDetailsSingleSegment = ({ params }: { params: Promise<{ id: string }> }) => {
+  // ✅ Unwrap params Promise using React.use() for Next.js 15
+  const unwrappedParams = use(params);
   
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <WrappedComponent />
+      <ShopDetailsInner params={{ id: unwrappedParams.id, code: '' }} />
     </Suspense>
   );
 };

@@ -1,6 +1,6 @@
 'use client'; // ⬅️ CRUCIAL: Must be a Client Component to use hooks like useState, useEffect, useContext, and useQuery.
 
-import React, { Suspense, useContext, useEffect, useState } from "react";
+import React, { Suspense, useContext, useEffect, useState, use } from "react";
 // Next.js App Router imports for routing and URL params
 import Link from "next/link"; 
 import { usePathname, useRouter, useSearchParams } from "next/navigation"; // ⬅️ Replaces useLocation, useNavigate, and logic for useParams
@@ -34,6 +34,9 @@ import "react-loading-skeleton/dist/skeleton.css";
 import auth925 from "../../assets/images/Tags/Auth925.png";
 
 export const ShopDetailsInner = ({ params }: { params: { id: string; code: string } }) => {
+  // ✅ Params should already be unwrapped when passed to this component
+  const unwrappedParams = params;
+  
   // ❌ Original: const location = useLocation();
   // ❌ Original: const navigate = useNavigate();
   
@@ -43,8 +46,8 @@ export const ShopDetailsInner = ({ params }: { params: { id: string; code: strin
   const searchParams = useSearchParams(); 
   // ✅ Get id and code from route params first, fallback to searchParams
   // Handle both URL patterns: /shopdetails/id/code and /shopdetails/id?code=...
-  const routeId = params?.id || '';
-  const routeCode = params?.code || '';
+  const routeId = unwrappedParams?.id || '';
+  const routeCode = unwrappedParams?.code || '';
   const queryId = searchParams.get('id') || '';
   const queryCode = searchParams.get('code') || '';
   
@@ -1234,10 +1237,15 @@ export const ShopDetailsInner = ({ params }: { params: { id: string; code: strin
   );
 };
 
-const ShopDetails = ({ params }: { params: { id: string; code: string } }) => (
-  <Suspense fallback={<div>Loading...</div>}>
-    <ShopDetailsInner params={params} />
-  </Suspense>
-);
+const ShopDetails = ({ params }: { params: Promise<{ id: string; code: string }> }) => {
+  // ✅ Unwrap params Promise using React.use() for Next.js 15
+  const unwrappedParams = use(params);
+  
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ShopDetailsInner params={unwrappedParams} />
+    </Suspense>
+  );
+};
 
 export default ShopDetails;
