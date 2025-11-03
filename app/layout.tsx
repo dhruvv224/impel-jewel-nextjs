@@ -19,7 +19,8 @@ export const metadata: Metadata = {
   description: "Find handcrafted heart pendants & earrings at Impel. Perfect for gifts, Valentine's & daily wear. Shop affordable heart jewelry online in India today.",
   icons: {
     icon: [
-      { url: "/IMPEL-FAV.png", type: "image/png" },
+      { url: "/IMPEL-FAV.png", type: "image/png", sizes: "32x32" },
+      { url: "/IMPEL-FAV.png", type: "image/png", sizes: "16x16" },
     ],
     shortcut: "/IMPEL-FAV.png",
     apple: "/IMPEL-FAV.png",
