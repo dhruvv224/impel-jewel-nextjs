@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import  Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { BsFacebook, BsInstagram, BsYoutube } from "react-icons/bs";
 import { FaPinterest } from "react-icons/fa";
 import GoTop from "./GoTop";
@@ -9,8 +9,7 @@ import profileService from "../services/Home";
 import { useQuery } from "@tanstack/react-query";
 
 const Footer = () => {
-    const router = useRouter();
-  const pathname =router.pathname
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
 
   const { data: siteSetting } = useQuery({

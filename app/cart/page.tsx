@@ -1028,34 +1028,36 @@ const Cart = () => {
                               <div className="card mb-3 border shadow-0">
                                 <div className="card-body">
                                   <form>
-                                    <div className="form-group">
-                                      <label className="form-label">
-                                        Have a Dealer coupon?
-                                      </label>
-                                      <div className="input-group">
-                                        <input
-                                          type="text"
-                                          name="dealer_code"
-                                          className="form-control border"
-                                          placeholder="Dealer coupon code"
-                                          value={dealer_code}
-                                          onChange={(e) => handleDealercode(e)}
-                                        />
-                                        <button
-                                          className="btn btn-light border"
-                                          onClick={(e) => Applycoupen(e)}
-                                        >
-                                          Apply
-                                        </button>
-                                      </div>
-                                      {isFormEmpty ? (
-                                        <span className="text-danger">
-                                          {isFormEmpty}
-                                        </span>
-                                      ) : (
-                                        <></>
-                                      )}
+                                  <div className="form-group">
+                                    <label className="form-label">
+                                      Have a Dealer coupon?
+                                    </label>
+                                    <div className="input-group" style={{ display: 'flex', flexWrap: 'nowrap' }}>
+                                      <input
+                                        type="text"
+                                        name="dealer_code"
+                                        className="form-control border"
+                                        placeholder="Dealer coupon code"
+                                        value={dealer_code}
+                                        onChange={(e) => handleDealercode(e)}
+                                        style={{ flex: '1', minWidth: 0 }}
+                                      />
+                                      <button
+                                        className="btn btn-light border"
+                                        onClick={(e) => Applycoupen(e)}
+                                        style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                                      >
+                                        Apply
+                                      </button>
                                     </div>
+                                    {isFormEmpty ? (
+                                      <span className="text-danger">
+                                        {isFormEmpty}
+                                      </span>
+                                    ) : (
+                                      <></>
+                                    )}
+                                  </div>
                                   </form>
                                 </div>
                               </div>

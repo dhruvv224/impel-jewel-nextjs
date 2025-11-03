@@ -1218,7 +1218,7 @@ useEffect(() => {
                                     <label className="form-label">
                                       Have a Dealer coupon?
                                     </label>
-                                    <div className="input-group">
+                                    <div className="input-group" style={{ display: 'flex', flexWrap: 'nowrap' }}>
                                       <input
                                         type="text"
                                         name="dealer_code"
@@ -1226,10 +1226,12 @@ useEffect(() => {
                                         placeholder="Dealer coupon code"
                                         value={dealer_code}
                                         onChange={(e) => handleDealercode(e)}
+                                        style={{ flex: '1', minWidth: 0 }}
                                       />
                                       <button
                                         className="btn btn-light border"
                                         onClick={(e) => Applycoupen(e)}
+                                        style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
                                       >
                                         Apply
                                       </button>
