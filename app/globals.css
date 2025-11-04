@@ -2428,11 +2428,11 @@ input[type="file"] {
  * MOBILE RESPONSIVE FIXES (Based on original app.css media queries)
  * ---------------------------------------------------
  */
+  /* On mobile, re-enable standard grid layout or stack content for mobile header */
 
 @media only screen and (max-width: 991px) {
-  /* On mobile, re-enable standard grid layout or stack content for mobile header */
   .header_inner {
-    grid-template-columns: auto 1fr auto; /* [ Burger ] [ Logo ] [ Icons ] */
+    grid-template-columns: auto 1fr auto; 
     grid-column-gap: 15px;
     padding: 10px 15px;
   }
@@ -2443,18 +2443,20 @@ input[type="file"] {
   }
 
   /* Reset the navbar menu behavior for mobile to slide out */
+      /* Override width: 180px from original CSS to use full width */
+ /* Below the header bar */
+  /* Below the sticky header */
   .navbar-collapse {
     position: absolute;
-    top: 100%; /* Below the header bar */
+    top: 100%;
     left: 0;
-    width: 100%;
-    /* Override width: 180px from original CSS to use full width */
+    width:25%;
     height: auto !important;
     max-height: 0;
     overflow: hidden;
     background-color: #fff;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-    z-index: 998; /* Below the sticky header */
+    z-index: 998;
     transform: translateY(-10px);
     visibility: hidden;
     opacity: 0;
@@ -2479,21 +2481,21 @@ input[type="file"] {
   .header_icon .user {
     /* Ensure user name/text is visible inside the profile dropdown menu on mobile/dropdown open */
     display: block !important; 
-  }
-  
+  }/* Adjust padding within menu */
+      /* Reset active state transform logic */
+/* Forces it to flow within the mobile menu */
   /* Fix the tags dropdown positioning on mobile */
-  .make-by-order-dropdown {
-    position: static !important; /* Forces it to flow within the mobile menu */
+  /* .make-by-order-dropdown {
+    position: static !important; 
     width: 100% !important;
     box-shadow: none;
     background: transparent;
     border: none;
-    /* Reset active state transform logic */
     opacity: 1;
     visibility: visible;
     transform: none; 
-    padding: 0 10px; /* Adjust padding within menu */
-  }
+    padding: 0 10px; 
+  } */
 }
 
   .explore_banner .banner_info_inr {
