@@ -352,7 +352,7 @@ const Navbar = () => {
                   </Link>
                 </li>
 
-                <li className="nav-item">
+                <li className="nav-item make-order-nav-item">
                   <div onClick={TagsDropdown} ref={tagRef}>
                     <div
                       className={`make-by-order-dropdown ${

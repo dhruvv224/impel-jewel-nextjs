@@ -2493,6 +2493,11 @@ input[type="file"] {
     padding: 10px 0;
   }
 
+  /* Move Make by order to last position on mobile */
+  .header_inner .collapse ul.navbar-nav .nav-item.make-order-nav-item {
+    order: 999;
+  }
+
   .header_icon .user {
     /* Ensure user name/text is visible inside the profile dropdown menu on mobile/dropdown open */
     display: block !important; 
