@@ -184,6 +184,7 @@ const ReadyDesignCartInner = () => {
   const removeCouping = <Tooltip id="tooltip">Remove Coupon</Tooltip>;
 
   const GetUserCartList = async () => {
+    console.log("jiiii")
     if (!api || !phone) {
       setIsLoading(false);
       return;

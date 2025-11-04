@@ -1947,32 +1947,47 @@ input[type="file"] {
 
   .make-by-order-dropdown {
     position: absolute !important;
-    top: 56% !important;
-    left: 81% !important;
-    border-radius: 0 !important;
-    width: 100% !important;
-    height: 300px;
-    overflow-y: scroll;
-    overflow-x: hidden;
+    left: 100%;
+    top: 0;
+    width: 220px !important;
+    min-width: 180px;
+    max-width: 90vw;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    padding: 10px 0;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    max-height: 300px;
+    overflow-y: auto;
+    transition: all 0.2s;
   }
 
-  .make-by-order-dropdown:before {
-    content: "" !important;
-    position: absolute !important;
-    top: 7px !important;
-    left: 0 !important;
-    margin-left: -10px !important;
-    border-width: 0 10px 10px 10px !important;
-    border-style: solid !important;
-    border-color: transparent transparent #f8f9fa transparent !important;
-    z-index: -1 !important;
-    transform: rotate(270deg) !important;
-    width: auto !important;
-    height: auto !important;
-    background: none !important;
-    box-shadow: none !important;
+  .make-by-order-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    display: flex;
   }
 
+  .row {
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
+
+  .col-md-2 {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 10px;
+    margin-bottom: 8px;
+  }
   @keyframes tag {
     0% {
       transform: translateY(-20px);
@@ -2428,11 +2443,11 @@ input[type="file"] {
  * MOBILE RESPONSIVE FIXES (Based on original app.css media queries)
  * ---------------------------------------------------
  */
+  /* On mobile, re-enable standard grid layout or stack content for mobile header */
 
 @media only screen and (max-width: 991px) {
-  /* On mobile, re-enable standard grid layout or stack content for mobile header */
   .header_inner {
-    grid-template-columns: auto 1fr auto; /* [ Burger ] [ Logo ] [ Icons ] */
+    grid-template-columns: auto 1fr auto; 
     grid-column-gap: 15px;
     padding: 10px 15px;
   }
@@ -2443,18 +2458,20 @@ input[type="file"] {
   }
 
   /* Reset the navbar menu behavior for mobile to slide out */
+      /* Override width: 180px from original CSS to use full width */
+ /* Below the header bar */
+  /* Below the sticky header */
   .navbar-collapse {
     position: absolute;
-    top: 100%; /* Below the header bar */
+    top: 100%;
     left: 0;
-    width: 100%;
-    /* Override width: 180px from original CSS to use full width */
+    width:100%;
     height: auto !important;
     max-height: 0;
     overflow: hidden;
     background-color: #fff;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
-    z-index: 998; /* Below the sticky header */
+    z-index: 998;
     transform: translateY(-10px);
     visibility: hidden;
     opacity: 0;
@@ -2479,20 +2496,20 @@ input[type="file"] {
   .header_icon .user {
     /* Ensure user name/text is visible inside the profile dropdown menu on mobile/dropdown open */
     display: block !important; 
-  }
-  
+  }/* Adjust padding within menu */
+      /* Reset active state transform logic */
+/* Forces it to flow within the mobile menu */
   /* Fix the tags dropdown positioning on mobile */
   .make-by-order-dropdown {
-    position: static !important; /* Forces it to flow within the mobile menu */
+    position: static !important; 
     width: 100% !important;
     box-shadow: none;
     background: transparent;
     border: none;
-    /* Reset active state transform logic */
     opacity: 1;
     visibility: visible;
     transform: none; 
-    padding: 0 10px; /* Adjust padding within menu */
+    padding: 0 10px; 
   }
 }
 
@@ -3293,7 +3310,7 @@ input[type="file"] {
   border-radius: 5px;
 }
 
-.make-by-order-dropdown::before {
+/* .make-by-order-dropdown::before {
   content: "";
   position: absolute;
   top: -10px;
@@ -3304,7 +3321,7 @@ input[type="file"] {
   box-shadow: 0 10px 20px rgba(220, 220, 220, 0.2);
   transform: rotate(45deg);
   z-index: -1;
-}
+} */
 
 .make-by-order-dropdown.active {
   opacity: 1;
@@ -3502,7 +3519,7 @@ input[type="file"] {
 
 .womans-toggle {
   position: fixed;
-  top: 80%;
+  top: 87%;
   left: 0;
   transform: translateY(-50%) rotate(-90deg);
   transform-origin: left top;
@@ -3513,7 +3530,7 @@ input[type="file"] {
   font-weight: 600;
   text-decoration: none;
   border-radius: 5px;
-  padding: 10px 20px;
+  padding: 8px 18px;
   border-width: 0;
   box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.2);
   white-space: nowrap;
