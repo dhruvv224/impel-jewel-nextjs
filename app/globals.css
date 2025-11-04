@@ -1947,32 +1947,47 @@ input[type="file"] {
 
   .make-by-order-dropdown {
     position: absolute !important;
-    top: 56% !important;
-    left: 81% !important;
-    border-radius: 0 !important;
-    width: 100% !important;
-    height: 300px;
-    overflow-y: scroll;
-    overflow-x: hidden;
+    left: 100%;
+    top: 0;
+    width: 220px !important;
+    min-width: 180px;
+    max-width: 90vw;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    padding: 10px 0;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    max-height: 300px;
+    overflow-y: auto;
+    transition: all 0.2s;
   }
 
-  .make-by-order-dropdown:before {
-    content: "" !important;
-    position: absolute !important;
-    top: 7px !important;
-    left: 0 !important;
-    margin-left: -10px !important;
-    border-width: 0 10px 10px 10px !important;
-    border-style: solid !important;
-    border-color: transparent transparent #f8f9fa transparent !important;
-    z-index: -1 !important;
-    transform: rotate(270deg) !important;
-    width: auto !important;
-    height: auto !important;
-    background: none !important;
-    box-shadow: none !important;
+  .make-by-order-dropdown.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    display: flex;
   }
 
+  .row {
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    display: flex;
+  }
+
+  .col-md-2 {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 10px;
+    margin-bottom: 8px;
+  }
   @keyframes tag {
     0% {
       transform: translateY(-20px);
@@ -2450,7 +2465,7 @@ input[type="file"] {
     position: absolute;
     top: 100%;
     left: 0;
-    width:25%;
+    width:100%;
     height: auto !important;
     max-height: 0;
     overflow: hidden;
@@ -2485,7 +2500,7 @@ input[type="file"] {
       /* Reset active state transform logic */
 /* Forces it to flow within the mobile menu */
   /* Fix the tags dropdown positioning on mobile */
-  /* .make-by-order-dropdown {
+  .make-by-order-dropdown {
     position: static !important; 
     width: 100% !important;
     box-shadow: none;
@@ -2495,7 +2510,7 @@ input[type="file"] {
     visibility: visible;
     transform: none; 
     padding: 0 10px; 
-  } */
+  }
 }
 
   .explore_banner .banner_info_inr {
@@ -3295,7 +3310,7 @@ input[type="file"] {
   border-radius: 5px;
 }
 
-.make-by-order-dropdown::before {
+/* .make-by-order-dropdown::before {
   content: "";
   position: absolute;
   top: -10px;
@@ -3306,7 +3321,7 @@ input[type="file"] {
   box-shadow: 0 10px 20px rgba(220, 220, 220, 0.2);
   transform: rotate(45deg);
   z-index: -1;
-}
+} */
 
 .make-by-order-dropdown.active {
   opacity: 1;
