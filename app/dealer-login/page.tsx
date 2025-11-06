@@ -7,7 +7,8 @@ import Head from "next/head"; // Replaced Helmet from 'react-helmet-async'
 import toast from "react-hot-toast";
 import { CgSpinner } from "react-icons/cg";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import dynamic from "next/dynamic"; // For client-side-only imports
+// Temporarily commented out for testing
+// import dynamic from "next/dynamic"; // For client-side-only imports
 
 import profileService from "../services/Auth";
 import { useMutation } from "@tanstack/react-query";
@@ -15,9 +16,10 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
 // Dynamically import ReCAPTCHA, disabling SSR
-const ReCAPTCHA = dynamic(() => import("react-google-recaptcha"), {
-  ssr: false,
-});
+// Temporarily commented out for testing
+// const ReCAPTCHA = dynamic(() => import("react-google-recaptcha"), {
+//   ssr: false,
+// });
 
 const validationSchema = Yup.object({
   login: Yup.string()
@@ -38,9 +40,10 @@ const validationSchema = Yup.object({
 });
 
 const DealerLogin = () => {
-  const recaptcha = useRef();
+  // Temporarily commented out for testing
+  // const recaptcha = useRef();
   const router = useRouter(); // Initialize Next.js router
-  const [captcha, setCaptcha] = useState("");
+  // const [captcha, setCaptcha] = useState("");
   const [spinner, setSpinner] = useState(false);
   const [passwordType, setPasswordType] = useState("password");
 
@@ -72,17 +75,18 @@ const DealerLogin = () => {
   });
 
   const handleSubmit = (values, { setSubmitting, setErrors }) => {
+    // Temporarily commented out for testing
     // Check window only once to safely access ReCAPTCHA ref
-    const captchaValue = typeof window !== 'undefined' ? recaptcha.current?.getValue() : null;
+    // const captchaValue = typeof window !== 'undefined' ? recaptcha.current?.getValue() : null;
 
-    if (!captchaValue) {
-      setCaptcha("Please verify CAPTCHA.");
-      setSubmitting(false);
-      return;
-    }
+    // if (!captchaValue) {
+    //   setCaptcha("Please verify CAPTCHA.");
+    //   setSubmitting(false);
+    //   return;
+    // }
 
     setSpinner(true);
-    setCaptcha(""); // Clear captcha error on new submission attempt
+    // setCaptcha(""); // Clear captcha error on new submission attempt
 
     const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
     const phoneRegex = /^\d{10}$/;
@@ -167,8 +171,9 @@ const DealerLogin = () => {
                         </div>
                       </div>
 
-                      <div className="mt-4 d-flex align-items-center justify-content-center">
-                        {/* ReCAPTCHA is dynamically loaded (ssr: false) */}
+                      {/* Temporarily commented out for testing */}
+                      {/* <div className="mt-4 d-flex align-items-center justify-content-center">
+                        ReCAPTCHA is dynamically loaded (ssr: false)
                         <ReCAPTCHA
                           ref={recaptcha}
                           sitekey="6Lc7Em0pAAAAAHHha3qWzytW6qKfkBqh8ResnmfR"
@@ -176,7 +181,7 @@ const DealerLogin = () => {
                       </div>
                       {captcha && (
                         <div className="text-center text-danger">{captcha}</div>
-                      )}
+                      )} */}
 
                       <div className="form-group">
                         <button

@@ -38,7 +38,9 @@ const ReadyDetails = ({ params }) => {
   const currentPath = usePathname();
   // Use slug from URL (prioritize dynamic route segment if present, otherwise search param)
   // This ensures we get the item's identifier from the URL.
-  const routeId = params.id;
+  // In Next.js 15+, params is a Promise and must be unwrapped with React.use()
+  const unwrappedParams = React.use(params);
+  const routeId = unwrappedParams.id;
 
   // --- Client-Side State Initialization for localStorage values ---
   const [phone, setPhone] = useState(null);

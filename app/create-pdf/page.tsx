@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState } from "react";
-import "./CreatePDF.css";
+import "./createPDF.css";
 import DealerPdf from "../services/Dealer/PdfShare";
 import toast from "react-hot-toast";
 import Loader from "../components/common/Loader";
@@ -431,73 +431,50 @@ const CreatePDF = () => {
                               </div>
                               {pdfLists?.map((product) => {
                                 return (
-                                  <>
-                                    <div key={product.id}>
-                                      <div className="row">
-                                        <div className="col-12 col-sm-12 col-md-12 col-lg-12">
-                                          <hr />
-                                          <div className="cart-item">
-                                            <div className="row">
-                                              <div className="col-12 col-sm-12 col-md-6 col-lg-6">
-                                                <div className="d-flex mb-3">
-                                                  <img
-                                                    className="img-fluid"
-                                                    style={{
-                                                      width: "120px",
-                                                      height: "auto",
-                                                    }}
-                                                    src={product?.image}
-                                                    alt={product?.name}
-                                                  />
-                                                  <div className="mx-3">
-                                                    <h5>{product?.name}</h5>
-                                                    <p className="mb-2">
-                                                      {product?.code}
-                                                    </p>
-                                                    <h5 className="text-success fw-bold">
-                                                      &#x20B9;
-                                                      {numberFormat(
-                                                        product?.total_amount_18k
-                                                      )}
-                                                    </h5>
-                                                  </div>
+                                  <div key={product.id}>
+                                    <div className="row">
+                                      <div className="col-12 col-sm-12 col-md-12 col-lg-12">
+                                        <hr />
+                                        <div className="cart-item">
+                                          <div className="row">
+                                            <div className="col-12 col-sm-12 col-md-6 col-lg-6">
+                                              <div className="d-flex mb-3">
+                                                <img
+                                                  className="img-fluid"
+                                                  style={{
+                                                    width: "120px",
+                                                    height: "auto",
+                                                  }}
+                                                  src={product?.image}
+                                                  alt={product?.name}
+                                                />
+                                                <div className="mx-3">
+                                                  <h5>{product?.name}</h5>
+                                                  <p className="mb-2">
+                                                    {product?.code}
+                                                  </p>
+                                                  <h5 className="text-success fw-bold">
+                                                    &#x20B9;
+                                                    {numberFormat(
+                                                      product?.total_amount_18k
+                                                    )}
+                                                  </h5>
                                                 </div>
                                               </div>
-                                              <div className="col-12 col-sm-12 col-md-6 col-lg-6">
-                                                <div
-                                                  style={{
-                                                    display: "grid",
-                                                    justifyContent: "end",
-                                                    gap: "15px",
-                                                  }}
-                                                >
-                                                  <div className="pdf-checkbox-btn d-flex justify-content-end">
-                                                    <input
-                                                      type="checkbox"
-                                                      id={`checkbox-${product.id}`}
-                                                      className="address-checkbox"
-                                                      checked={selectedProducts.includes(
-                                                        product.id
-                                                      )}
-                                                      onChange={() =>
-                                                        handleCheckboxChange(
-                                                          product.id
-                                                        )
-                                                      }
-                                                      style={{
-                                                        cursor: "pointer",
-                                                      }}
-                                                    />
-                                                    <label
-                                                      htmlFor={`checkbox-${product.id}`}
-                                                      className="pdf-check-text"
-                                                      style={{
-                                                        cursor: "pointer",
-                                                      }}
-                                                    ></label>
-                                                  </div>
-                                                  {/* <input
+                                            </div>
+                                            <div className="col-12 col-sm-12 col-md-6 col-lg-6">
+                                              <div
+                                                style={{
+                                                  display: "grid",
+                                                  justifyContent: "end",
+                                                  gap: "15px",
+                                                }}
+                                              >
+                                                <div className="pdf-checkbox-btn d-flex justify-content-end">
+                                                  <input
                                                     type="checkbox"
+                                                    id={`checkbox-${product.id}`}
+                                                    className="address-checkbox"
                                                     checked={selectedProducts.includes(
                                                       product.id
                                                     )}
@@ -506,38 +483,59 @@ const CreatePDF = () => {
                                                         product.id
                                                       )
                                                     }
-                                                  /> */}
-
-                                                  <button
-                                                    type="button"
-                                                    className="btn btn-danger"
-                                                    onClick={() =>
-                                                      RemovePdf([product.id])
-                                                    }
-                                                  >
-                                                    {removingItemId.includes(
-                                                      product?.id
-                                                    ) ? (
-                                                      <CgSpinner
-                                                        size={20}
-                                                        className="animate_spin"
-                                                      />
-                                                    ) : (
-                                                      <MdDeleteOutline
-                                                        style={{
-                                                          fontSize: "20px",
-                                                        }}
-                                                      />
-                                                    )}
-                                                  </button>
+                                                    style={{
+                                                      cursor: "pointer",
+                                                    }}
+                                                  />
+                                                  <label
+                                                    htmlFor={`checkbox-${product.id}`}
+                                                    className="pdf-check-text"
+                                                    style={{
+                                                      cursor: "pointer",
+                                                    }}
+                                                  ></label>
                                                 </div>
+                                                {/* <input
+                                                  type="checkbox"
+                                                  checked={selectedProducts.includes(
+                                                    product.id
+                                                  )}
+                                                  onChange={() =>
+                                                    handleCheckboxChange(
+                                                      product.id
+                                                    )
+                                                  }
+                                                /> */}
+
+                                                <button
+                                                  type="button"
+                                                  className="btn btn-danger"
+                                                  onClick={() =>
+                                                    RemovePdf([product.id])
+                                                  }
+                                                >
+                                                  {removingItemId.includes(
+                                                    product?.id
+                                                  ) ? (
+                                                    <CgSpinner
+                                                      size={20}
+                                                      className="animate_spin"
+                                                    />
+                                                  ) : (
+                                                    <MdDeleteOutline
+                                                      style={{
+                                                        fontSize: "20px",
+                                                      }}
+                                                    />
+                                                  )}
+                                                </button>
                                               </div>
                                             </div>
                                           </div>
                                         </div>
                                       </div>
                                     </div>
-                                  </>
+                                  </div>
                                 );
                               })}
                             </div>
@@ -553,7 +551,7 @@ const CreatePDF = () => {
                             </div>
                             <div className="text-center my-4">
                               <img
-                                src=''
+                                src="/assets/images/empty-cart.png"
                                 alt="Empty Cart Illustration"
                                 className="img-fluid mb-3"
                                 style={{ maxWidth: "200px" }}
@@ -568,7 +566,7 @@ const CreatePDF = () => {
                             </div>
                             <div className="text-center">
                               <Link
-                                to="/shop"
+                                href="/shop"
                                 className="view_all_btn px-4 py-2"
                                 style={{ borderRadius: "8px" }}
                               >
@@ -799,7 +797,7 @@ const CreatePDF = () => {
                             </div>
                             <div className="text-center">
                               <Link
-                                to="/ready-to-dispatch"
+                                href="/ready-to-dispatch"
                                 className="view_all_btn px-4 py-2"
                                 style={{ borderRadius: "8px" }}
                               >
