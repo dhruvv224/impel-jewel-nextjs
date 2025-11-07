@@ -551,7 +551,7 @@ const ShopPageInner = () => {
           design_id: product?.id,
         });
         if (res.success === true) {
-          toast.success("Design has been Added to Your Collection.");
+          toast.success("design Added Successfully");
           FilterData();
           GetDealerSelection();
         }
@@ -671,6 +671,7 @@ const ShopPageInner = () => {
               <div className="col-lg-9 col-md-6 col-12 mb-lg-3 mb-md-3 mb-2">
                 {isMounted ? (
                   <Select
+                    instanceId="shop-category-select"
                     placeholder="Shop by category"
                     isClearable={true}
                     isSearchable={false}
@@ -690,6 +691,7 @@ const ShopPageInner = () => {
               <div className="col-lg-3 col-md-6 col-12 mb-lg-3 mb-md-3 mb-2">
                 {isMounted ? (
                   <Select
+                    instanceId="shop-sort-select"
                     value={selectedOption}
                     onChange={handleSelectChange}
                     isClearable={true}
@@ -721,6 +723,7 @@ const ShopPageInner = () => {
               <div className="col-lg-3 col-md-6 col-12 mb-lg-4 mb-md-3 mb-2">
                 {isMounted ? (
                   <Select
+                    instanceId="shop-gender-select"
                     placeholder="Shop by Gender"
                     isClearable
                     isSearchable={false}
@@ -740,6 +743,7 @@ const ShopPageInner = () => {
               <div className="col-lg-3 col-md-6 col-12 mb-lg-4 mb-md-5 mb-2">
                 {isMounted ? (
                   <Select
+                    instanceId="shop-tag-select"
                     placeholder="Shop by Tag"
                     isClearable
                     isSearchable={false}
@@ -759,6 +763,7 @@ const ShopPageInner = () => {
               <div className="col-lg-3 col-md-6 col-12 mb-lg-4 mb-md-5 mb-4">
                 {isMounted ? (
                   <Select
+                    instanceId="shop-price-select"
                     value={selectedPriceOption}
                     onChange={handlePriceRangeChange}
                     options={priceRangeOptions}

@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import "./createPDF.css";
 import DealerPdf from "../services/Dealer/PdfShare";
 import toast from "react-hot-toast";
@@ -264,6 +264,19 @@ const CreatePDF = () => {
   const pdfDataPrint = () => {
     const productsPerPage = 4;
     const pages = [];
+    
+    // Guard: Return empty document if no data
+    if (!pdfLists || pdfLists.length === 0) {
+      return (
+        <Document>
+          <Page size="A4" style={styles.page}>
+            <View style={styles.header}>
+              <Text>No items to display</Text>
+            </View>
+          </Page>
+        </Document>
+      );
+    }
 
     // Split the pdfLists array into chunks of 4 products per page
     for (let i = 0; i < pdfLists.length; i += productsPerPage) {
@@ -304,6 +317,19 @@ const CreatePDF = () => {
   const pdfReadyDataPrint = () => {
     const productsPerPage = 4;
     const pages = [];
+    
+    // Guard: Return empty document if no data
+    if (!readyPdfLists || readyPdfLists.length === 0) {
+      return (
+        <Document>
+          <Page size="A4" style={styles.page}>
+            <View style={styles.header}>
+              <Text>No items to display</Text>
+            </View>
+          </Page>
+        </Document>
+      );
+    }
 
     for (let i = 0; i < readyPdfLists.length; i += productsPerPage) {
       const productGroup = readyPdfLists.slice(i, i + productsPerPage);
@@ -339,6 +365,21 @@ const CreatePDF = () => {
 
     return <Document>{pages}</Document>;
   };
+
+  // Memoize PDF documents to prevent re-generation on every render
+  const memoizedPdfDocument = useMemo(() => {
+    if (!pdfLists || pdfLists.length === 0) {
+      return null;
+    }
+    return pdfDataPrint();
+  }, [pdfLists]);
+
+  const memoizedReadyPdfDocument = useMemo(() => {
+    if (!readyPdfLists || readyPdfLists.length === 0) {
+      return null;
+    }
+    return pdfReadyDataPrint();
+  }, [readyPdfLists]);
 
   if (!isClient) {
     return (
@@ -379,23 +420,29 @@ const CreatePDF = () => {
                               }}
                             >
                               <div className="d-flex justify-content-between">
-                                <PDFDownloadLink
-                                  document={pdfDataPrint()}
-                                  filename="FORM.pdf"
-                                  style={{ textDecoration: "none" }}
-                                >
-                                  {({ loading }) =>
-                                    loading ? (
-                                      <button className="pdf-share-btn mt-2">
-                                        Loading Document...
-                                      </button>
-                                    ) : (
-                                      <button className="pdf-share-btn mt-2">
-                                        Share <IoShareSocial className="ms-2" />
-                                      </button>
-                                    )
-                                  }
-                                </PDFDownloadLink>
+                                {pdfLists && pdfLists.length > 0 && memoizedPdfDocument ? (
+                                  <PDFDownloadLink
+                                    document={memoizedPdfDocument}
+                                    fileName="FORM.pdf"
+                                    style={{ textDecoration: "none" }}
+                                  >
+                                    {({ loading }) =>
+                                      loading ? (
+                                        <button className="pdf-share-btn mt-2">
+                                          Loading Document...
+                                        </button>
+                                      ) : (
+                                        <button className="pdf-share-btn mt-2">
+                                          Share <IoShareSocial className="ms-2" />
+                                        </button>
+                                      )
+                                    }
+                                  </PDFDownloadLink>
+                                ) : (
+                                  <button className="pdf-share-btn mt-2" disabled>
+                                    No items to share
+                                  </button>
+                                )}
                                 <div className="d-flex gap-2 align-items-center">
                                   <div className="pdf-checkbox-btn select-all-btn-pdf">
                                     <input
@@ -591,23 +638,29 @@ const CreatePDF = () => {
                               }}
                             >
                               <div className="d-flex justify-content-between">
-                                <PDFDownloadLink
-                                  document={pdfReadyDataPrint()}
-                                  filename="FORM.pdf"
-                                  style={{ textDecoration: "none" }}
-                                >
-                                  {({ loading }) =>
-                                    loading ? (
-                                      <button className="pdf-share-btn mt-2">
-                                        Loading Document...
-                                      </button>
-                                    ) : (
-                                      <button className="pdf-share-btn mt-2">
-                                        Share <IoShareSocial className="ms-2" />
-                                      </button>
-                                    )
-                                  }
-                                </PDFDownloadLink>
+                                {readyPdfLists && readyPdfLists.length > 0 && memoizedReadyPdfDocument ? (
+                                  <PDFDownloadLink
+                                    document={memoizedReadyPdfDocument}
+                                    fileName="FORM.pdf"
+                                    style={{ textDecoration: "none" }}
+                                  >
+                                    {({ loading }) =>
+                                      loading ? (
+                                        <button className="pdf-share-btn mt-2">
+                                          Loading Document...
+                                        </button>
+                                      ) : (
+                                        <button className="pdf-share-btn mt-2">
+                                          Share <IoShareSocial className="ms-2" />
+                                        </button>
+                                      )
+                                    }
+                                  </PDFDownloadLink>
+                                ) : (
+                                  <button className="pdf-share-btn mt-2" disabled>
+                                    No items to share
+                                  </button>
+                                )}
                                 <div className="d-flex gap-2 align-items-center">
                                   <div className="pdf-checkbox-btn select-all-btn-pdf">
                                     <input
@@ -661,7 +714,7 @@ const CreatePDF = () => {
                                                   }}
                                                   src={product?.image}
                                                   onError={(e) => {
-                                                    e.target.onerror = null;
+                                                    (e.target as HTMLImageElement).onerror = null;
                                                   }}
                                                   alt=""
                                                   loading="lazy"
