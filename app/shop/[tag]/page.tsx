@@ -3,8 +3,7 @@
 import React, { useContext, useEffect, useState, useCallback, Suspense } from "react";
 // ✅ Next.js App Router replacements for routing and URL state management
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation"; 
-import Head from "next/head"; // Replaces Helmet
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { BsSearch } from "react-icons/bs";
 import { FiHeart } from "react-icons/fi";
@@ -663,9 +662,6 @@ const ShopTagPageInner = () => {
 
   return (
     <>
-      <Head>
-        <title>Impel Store - Shop</title>
-      </Head>
       <section className="shop">
         <div className="container">
           <div className="shopping_data">

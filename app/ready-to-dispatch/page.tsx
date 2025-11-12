@@ -27,6 +27,32 @@ const debounce = (func, wait) => {
   };
 };
 
+// Utility function to convert name to URL-friendly slug
+const nameToSlug = (name: string): string => {
+  if (!name) return "";
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "") // Remove special characters
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+};
+
+// Utility function to find ID by slug from various data sources
+const findIdBySlug = (
+  slug: string,
+  dataSource: any[],
+  idKey: string,
+  nameKey: string
+): string | null => {
+  if (!slug || !dataSource) return null;
+  const item = dataSource.find(
+    (item) => nameToSlug(item[nameKey]) === slug
+  );
+  return item ? String(item[idKey]) : null;
+};
+
 const ReadytoDispatchInner = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -96,12 +122,14 @@ const ReadytoDispatchInner = () => {
     queryParams.delete("page"); // reset pagination
 
     if (selectedOption) {
-      queryParams.set(paramName, selectedOption.value);
+      // Use slug (label) in URL instead of ID (value)
+      const slug = nameToSlug(selectedOption.label);
+      queryParams.set(paramName, slug);
     } else {
       queryParams.delete(paramName);
     }
 
-    // ✅ Update URL with new query params
+    // ✅ Update URL with new query params (using slugs)
     router.replace(`/ready-to-dispatch?${queryParams.toString()}`, { scroll: false });
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
 
@@ -138,12 +166,13 @@ const ReadytoDispatchInner = () => {
     const queryParams = new URLSearchParams(searchParams.toString());
     const currentPage = parseInt(queryParams.get("page") ?? "1") || 1;
     const currentSearch = queryParams.get("search");
-    const itemsFromURL = queryParams.get("items");
-    const subItemsFromURL = queryParams.get("sub-items");
-    const sizeFromURL = queryParams.get("sizes");
-    const stylesFromURL = queryParams.get("styles");
-    const itemGroupFromURL = queryParams.get("item-group");
-    const companyIdFromURL = queryParams.get("companyId");
+    // Read slugs from URL
+    const itemsSlugFromURL = queryParams.get("items");
+    const subItemsSlugFromURL = queryParams.get("sub-items");
+    const sizeSlugFromURL = queryParams.get("sizes");
+    const stylesSlugFromURL = queryParams.get("styles");
+    const itemGroupSlugFromURL = queryParams.get("item-group");
+    const companySlugFromURL = queryParams.get("companyId");
 
     setPagination((prev) => ({ ...prev, currentPage }));
 
@@ -151,6 +180,88 @@ const ReadytoDispatchInner = () => {
       const companyTagRes = await profileService.GetCompanyTag();
       const companyData = companyTagRes?.data?.map((data: any) => data?.company_tag_id).join(",");
 
+      // First, fetch filters to get the data needed for slug-to-ID conversion
+      const filterResponse = await fetch("https://api.indianjewelcast.com/api/Tag/GetFilters", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          PageNo: 1,
+          PageSize: 20,
+          DeviceID: 0,
+          SortBy: "",
+          SearchText: currentSearch || "",
+          TranType: "",
+          CommaSeperate_ItemGroupID: "",
+          CommaSeperate_ItemID: "",
+          CommaSeperate_StyleID: "",
+          CommaSeperate_ProductID: "",
+          CommaSeperate_SubItemID: "",
+          CommaSeperate_AppItemCategoryID: "",
+          CommaSeperate_ItemSubID: "",
+          CommaSeperate_KarigarID: "",
+          CommaSeperate_BranchID: "",
+          CommaSeperate_Size: "",
+          CommaSeperate_CounterID: "",
+          MinNetWt: 0,
+          OnlyCartItem: false,
+          OnlyWishlistItem: false,
+          StockStatus: "",
+          DoNotShowInClientApp: 0,
+          HasTagImage: 0,
+          CommaSeperate_CompanyID: companyData,
+          MaxNetWt: 1000,
+        }),
+      });
+      const filterData = await filterResponse.json();
+      setFilters(filterData?.Filters || []);
+
+      // Convert slugs to IDs for API calls
+      let itemsIdFromURL = "";
+      let subItemsIdFromURL = "";
+      let sizeIdFromURL = "";
+      let stylesIdFromURL = "";
+      let itemGroupIdFromURL = "";
+      let companyIdFromURL = "";
+
+      // Convert company slug to ID
+      if (companySlugFromURL) {
+        const companyItem = JewelleryType.find(
+          (item) => nameToSlug(item.name) === companySlugFromURL
+        );
+        companyIdFromURL = companyItem ? companyItem.id : "";
+      }
+
+      // Convert item slug to ID
+      if (itemsSlugFromURL && masterGroups.length > 0) {
+        const itemId = findIdBySlug(itemsSlugFromURL, masterGroups, "ItemID", "ItemName");
+        itemsIdFromURL = itemId || "";
+      }
+
+      // Convert sub-item slug to ID
+      if (subItemsSlugFromURL && filterData?.Filters?.SubItems) {
+        const subItemId = findIdBySlug(subItemsSlugFromURL, filterData.Filters.SubItems, "SubItemID", "SubItemName");
+        subItemsIdFromURL = subItemId || "";
+      }
+
+      // Convert size slug to ID
+      if (sizeSlugFromURL && filterData?.Filters?.Size) {
+        const sizeId = findIdBySlug(sizeSlugFromURL, filterData.Filters.Size, "RowNumber", "Size1");
+        sizeIdFromURL = sizeId || "";
+      }
+
+      // Convert style slug to ID
+      if (stylesSlugFromURL && filterData?.Filters?.Styles) {
+        const styleId = findIdBySlug(stylesSlugFromURL, filterData.Filters.Styles, "StyleID", "StyleName");
+        stylesIdFromURL = styleId || "";
+      }
+
+      // Convert item-group slug to ID
+      if (itemGroupSlugFromURL && filterData?.Filters?.ItemGroups) {
+        const itemGroupId = findIdBySlug(itemGroupSlugFromURL, filterData.Filters.ItemGroups, "ItemGroupID", "GroupName");
+        itemGroupIdFromURL = itemGroupId || "";
+      }
+
+      // Now fetch products with converted IDs
       const productsResponse = await fetch("https://api.indianjewelcast.com/api/Tag/GetAll", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -161,17 +272,17 @@ const ReadytoDispatchInner = () => {
           SortBy: "",
           SearchText: currentSearch || "",
           TranType: "",
-          CommaSeperate_ItemGroupID: itemGroupFromURL || "",
-          CommaSeperate_ItemID: itemsFromURL || "",
-          CommaSeperate_StyleID: stylesFromURL || "",
+          CommaSeperate_ItemGroupID: itemGroupIdFromURL || "",
+          CommaSeperate_ItemID: itemsIdFromURL || "",
+          CommaSeperate_StyleID: stylesIdFromURL || "",
           CommaSeperate_ProductID: "",
           CommaSeperate_CompanyID: companyIdFromURL ? companyIdFromURL : companyData,
-          CommaSeperate_SubItemID: subItemsFromURL || "",
+          CommaSeperate_SubItemID: subItemsIdFromURL || "",
           CommaSeperate_AppItemCategoryID: "",
           CommaSeperate_ItemSubID: "",
           CommaSeperate_KarigarID: "",
           CommaSeperate_BranchID: "",
-          CommaSeperate_Size: sizeFromURL || "",
+          CommaSeperate_Size: sizeIdFromURL || "",
           CommaSeperate_CounterID: "",
           MinNetWt: 0,
           OnlyCartItem: false,
@@ -186,98 +297,105 @@ const ReadytoDispatchInner = () => {
       setProducts(productsData?.Tags || []);
       setTotalItems(productsData?.TotalItems || 0);
 
-      const filterResponse = await fetch("https://api.indianjewelcast.com/api/Tag/GetFilters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          PageNo: 1,
-          PageSize: 20,
-          DeviceID: 0,
-          SortBy: "",
-          SearchText: currentSearch || "",
-          TranType: "",
-          CommaSeperate_ItemGroupID: itemGroupFromURL || "",
-          CommaSeperate_ItemID: itemsFromURL || "",
-          CommaSeperate_StyleID: stylesFromURL || "",
-          CommaSeperate_ProductID: "",
-          CommaSeperate_SubItemID: subItemsFromURL || "",
-          CommaSeperate_AppItemCategoryID: "",
-          CommaSeperate_ItemSubID: "",
-          CommaSeperate_KarigarID: "",
-          CommaSeperate_BranchID: "",
-          CommaSeperate_Size: sizeFromURL || "",
-          CommaSeperate_CounterID: "",
-          MinNetWt: 0,
-          OnlyCartItem: false,
-          OnlyWishlistItem: false,
-          StockStatus: "",
-          DoNotShowInClientApp: 0,
-          HasTagImage: 0,
-          CommaSeperate_CompanyID: companyIdFromURL ? companyIdFromURL : companyData,
-          MaxNetWt: 1000,
-        }),
-      });
-      const filterData = await filterResponse.json();
-      setFilters(filterData?.Filters || []);
-
-      // Update state based on URL parameters
+      // Update state based on URL parameters (convert slugs back to option objects)
       if (!tagNoChange) {
-  setTagNoChange(currentSearch || "");
-}
+        setTagNoChange(currentSearch || "");
+      }
+
+      // Set selected items from slugs
       setSelectedItems(
-        itemsFromURL
-          ? {
-              value: Number(itemsFromURL),
-              label: filterData.Filters.Items.find((item: any) => item?.ItemID === Number(itemsFromURL))?.ItemName,
-            }
+        itemsSlugFromURL && masterGroups.length > 0
+          ? (() => {
+              const item = masterGroups.find(
+                (item) => nameToSlug(item.ItemName) === itemsSlugFromURL
+              );
+              return item
+                ? {
+                    value: item.ItemID,
+                    label: item.ItemName,
+                  }
+                : null;
+            })()
           : null
       );
+
       setSelectedSubItems(
-        subItemsFromURL
-          ? {
-              value: Number(subItemsFromURL),
-              label: filterData.Filters.SubItems.find((item: any) => item?.SubItemID === Number(subItemsFromURL))?.SubItemName,
-            }
+        subItemsSlugFromURL && filterData?.Filters?.SubItems
+          ? (() => {
+              const item = filterData.Filters.SubItems.find(
+                (item) => nameToSlug(item.SubItemName) === subItemsSlugFromURL
+              );
+              return item
+                ? {
+                    value: item.SubItemID,
+                    label: item.SubItemName,
+                  }
+                : null;
+            })()
           : null
       );
+
       setSelectedSizes(
-        sizeFromURL && filterData?.Filters?.Size
-          ? filterData.Filters.Size.find((item) => item?.RowNumber === Number(sizeFromURL))
-            ? {
-                value: Number(sizeFromURL),
-                label: filterData.Filters.Size.find((item) => item?.RowNumber === Number(sizeFromURL))?.Size1,
-              }
-            : null
+        sizeSlugFromURL && filterData?.Filters?.Size
+          ? (() => {
+              const item = filterData.Filters.Size.find(
+                (item) => nameToSlug(item.Size1) === sizeSlugFromURL
+              );
+              return item
+                ? {
+                    value: item.RowNumber,
+                    label: item.Size1,
+                  }
+                : null;
+            })()
           : null
       );
+
       setSelectedStyles(
-        stylesFromURL && filterData?.Filters?.Styles
-          ? filterData.Filters.Styles.find((item) => item?.StyleID === Number(stylesFromURL))
-            ? {
-                value: Number(stylesFromURL),
-                label: filterData.Filters.Styles.find((item) => item?.StyleID === Number(stylesFromURL))?.StyleName,
-              }
-            : null
+        stylesSlugFromURL && filterData?.Filters?.Styles
+          ? (() => {
+              const item = filterData.Filters.Styles.find(
+                (item) => nameToSlug(item.StyleName) === stylesSlugFromURL
+              );
+              return item
+                ? {
+                    value: item.StyleID,
+                    label: item.StyleName,
+                  }
+                : null;
+            })()
           : null
       );
+
       setSelectedItemGroups(
-        itemGroupFromURL && filterData?.Filters?.ItemGroups
-          ? filterData.Filters.ItemGroups.find((item) => item?.ItemGroupID === Number(itemGroupFromURL))
-            ? {
-                value: Number(itemGroupFromURL),
-                label: filterData.Filters.ItemGroups.find((item) => item?.ItemGroupID === Number(itemGroupFromURL))?.GroupName,
-              }
-            : null
+        itemGroupSlugFromURL && filterData?.Filters?.ItemGroups
+          ? (() => {
+              const item = filterData.Filters.ItemGroups.find(
+                (item) => nameToSlug(item.GroupName) === itemGroupSlugFromURL
+              );
+              return item
+                ? {
+                    value: item.ItemGroupID,
+                    label: item.GroupName,
+                  }
+                : null;
+            })()
           : null
       );
+
       setCompanyId(
-        companyIdFromURL
-          ? JewelleryType.find((item) => item?.id === companyIdFromURL)
-            ? {
-                value: companyIdFromURL,
-                label: JewelleryType.find((item) => item?.id === companyIdFromURL)?.name,
-              }
-            : null
+        companySlugFromURL
+          ? (() => {
+              const item = JewelleryType.find(
+                (item) => nameToSlug(item.name) === companySlugFromURL
+              );
+              return item
+                ? {
+                    value: item.id,
+                    label: item.name,
+                  }
+                : null;
+            })()
           : null
       );
 
@@ -286,7 +404,7 @@ const ReadytoDispatchInner = () => {
       console.error(err);
       setIsLoading(false);
     }
-  }, [searchParams.toString()]);
+  }, [searchParams.toString(), masterGroups]);
 
   // Fetch master groups
   const fetchMasterGroups = async () => {
@@ -328,6 +446,18 @@ const ReadytoDispatchInner = () => {
     getProductsFilterAndData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams.toString()]);
+
+  // Refetch when masterGroups becomes available (needed for item slug conversion)
+  useEffect(() => {
+    if (masterGroups.length > 0) {
+      const itemsSlugFromURL = searchParams.get("items");
+      if (itemsSlugFromURL) {
+        // If we have an item slug in URL but masterGroups just loaded, refetch to convert it
+        getProductsFilterAndData();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [masterGroups.length]);
 
   // Clean up debounce timeout on component unmount
 

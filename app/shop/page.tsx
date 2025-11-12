@@ -3,8 +3,7 @@
 import React, { useContext, useEffect, useState, useCallback, Suspense } from "react";
 // ✅ Next.js App Router replacements for routing and URL state management
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation"; 
-import Head from "next/head"; // Replaces Helmet
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { BsSearch } from "react-icons/bs";
 import { FiHeart } from "react-icons/fi";
@@ -37,6 +36,32 @@ const debounce = (func, wait) => {
     clearTimeout(timeout);
     timeout = setTimeout(() => func.apply(this, args), wait);
   };
+};
+
+// Utility function to convert name to URL-friendly slug
+const nameToSlug = (name: string): string => {
+  if (!name) return "";
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "") // Remove special characters
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+};
+
+// Utility function to find ID by slug from various data sources
+const findIdBySlug = (
+  slug: string,
+  dataSource: any[],
+  idKey: string,
+  nameKey: string
+): string | null => {
+  if (!slug || !dataSource) return null;
+  const item = dataSource.find(
+    (item) => nameToSlug(item[nameKey]) === slug
+  );
+  return item ? String(item[idKey]) : null;
 };
 
 const ShopPageInner = () => {
@@ -176,7 +201,9 @@ const ShopPageInner = () => {
     currentParams.delete("max_price");
 
     if (categoryId) {
-      currentParams.set("category_id", categoryId.value);
+      // Use slug (label) in URL instead of ID (value)
+      const slug = nameToSlug(categoryId.label);
+      currentParams.set("category_id", slug);
     } else {
       currentParams.delete("category_id");
     }
@@ -208,7 +235,9 @@ const ShopPageInner = () => {
     currentParams.delete("page");
     
     if (genderId) {
-      currentParams.set("gender_id", genderId.value);
+      // Use slug (label) in URL instead of ID (value)
+      const slug = nameToSlug(genderId.label);
+      currentParams.set("gender_id", slug);
     } else {
       currentParams.delete("gender_id");
     }
@@ -288,12 +317,12 @@ const ShopPageInner = () => {
   const FilterData = async () => {
     setIsLoading(true);
     
-    // ✅ Read parameters directly from useSearchParams
+    // ✅ Read parameters directly from useSearchParams (these are slugs now)
     const currentPageNo = parseInt(searchParams.get("page")) || 1;
-    const currentCategory = searchParams.get("category_id");
+    const currentCategorySlug = searchParams.get("category_id");
     const currentSearch = searchParams.get("search");
     const currentSort = searchParams.get("sort_by");
-    const currentGender = searchParams.get("gender_id");
+    const currentGenderSlug = searchParams.get("gender_id");
     const currentMinPrice = searchParams.get("min_price");
     const currentMaxPrice = searchParams.get("max_price");
 
@@ -309,9 +338,31 @@ const ShopPageInner = () => {
     }
 
     try {
+      // First fetch category and gender data to convert slugs to IDs
+      const categoryRes = await FilterServices.categoryFilter();
+      setCategoryData(categoryRes?.data || []);
+
+      const genderRes = await FilterServices.genderFilter();
+      setGenderData(genderRes?.data || []);
+
+      // Convert slugs to IDs for API calls
+      let categoryId = null;
+      let genderId = null;
+
+      if (currentCategorySlug && categoryRes?.data) {
+        const categoryIdFound = findIdBySlug(currentCategorySlug, categoryRes.data, "id", "name");
+        categoryId = categoryIdFound ? Number(categoryIdFound) : null;
+      }
+
+      if (currentGenderSlug && genderRes?.data) {
+        const genderIdFound = findIdBySlug(currentGenderSlug, genderRes.data, "id", "name");
+        genderId = genderIdFound ? Number(genderIdFound) : null;
+      }
+
+      // Now fetch products with converted IDs
       const filterResponse = await ShopServices.allfilterdesigns({
-        category_id: Number(currentCategory) || null,
-        gender_id: Number(currentGender) || null,
+        category_id: categoryId,
+        gender_id: genderId,
         tag_id: Number(currentTag) || null,
         search: currentSearch,
         min_price: Number(currentMinPrice) || null,
@@ -330,19 +381,14 @@ const ShopPageInner = () => {
         maxprice: filterResponse?.data?.maxprice || 0,
       });
 
-      const categoryRes = await FilterServices.categoryFilter();
-      setCategoryData(categoryRes?.data || []);
-
-      const genderRes = await FilterServices.genderFilter();
-      setGenderData(genderRes?.data || []);
-
-      if (categoryRes?.data && currentCategory) {
-        const Category_ids = categoryRes?.data?.find(
-          (item) => item?.id === Number(currentCategory)
+      // Set selected category from slug
+      if (categoryRes?.data && currentCategorySlug) {
+        const categoryItem = categoryRes.data.find(
+          (item) => nameToSlug(item.name) === currentCategorySlug
         );
         setSelectedCategory(
-          Category_ids
-            ? { value: Category_ids.id, label: Category_ids.name }
+          categoryItem
+            ? { value: categoryItem.id, label: categoryItem.name }
             : null
         );
       } else {
@@ -358,13 +404,14 @@ const ShopPageInner = () => {
         setSelectedOption(null);
       }
 
-      if (genderRes?.data && currentGender) {
-        const Gender_ids = genderRes?.data?.find(
-          (item) => item?.id === Number(currentGender)
+      // Set selected gender from slug
+      if (genderRes?.data && currentGenderSlug) {
+        const genderItem = genderRes.data.find(
+          (item) => nameToSlug(item.name) === currentGenderSlug
         );
         setSelectedGender(
-          Gender_ids
-            ? { value: Gender_ids.id, label: Gender_ids.name }
+          genderItem
+            ? { value: genderItem.id, label: genderItem.name }
             : null
         );
       } else {
@@ -661,9 +708,6 @@ const ShopPageInner = () => {
 
   return (
     <>
-      <Head>
-        <title>Impel Store - Shop</title>
-      </Head>
       <section className="shop">
         <div className="container">
           <div className="shopping_data">
