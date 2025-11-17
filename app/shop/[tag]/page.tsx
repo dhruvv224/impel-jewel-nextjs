@@ -301,13 +301,11 @@ const ShopTagPageInner = () => {
     const currentGender = searchParams.get("gender_id");
     const currentMinPrice = searchParams.get("min_price");
     const currentMaxPrice = searchParams.get("max_price");
-    const currentTagId = searchParams.get("tag_id"); // ✅ Get tag_id from query params
 
-    // The tag ID logic: first try query param, then try to find from URL path slug
+    // The tag ID logic: try to find from URL path slug (no longer using query param)
+    // First try existing filterTag state, if available
     let finalTagId = null;
-    if (currentTagId) {
-      finalTagId = Number(currentTagId);
-    } else if (filterTag && filterTag.length > 0 && tagNameFromUrl) {
+    if (filterTag && filterTag.length > 0 && tagNameFromUrl) {
       const currentTag = filterTag.find(
         (tag) => tag?.name?.toLowerCase() === tagNameFromUrl?.toLowerCase()
       )?.id || null;
@@ -321,7 +319,8 @@ const ShopTagPageInner = () => {
     }
 
     try {
-      const filterResponse = await ShopServices.allfilterdesigns({
+      // Make the first API call (with tag_id if we found it from filterTag state)
+      let filterResponse = await ShopServices.allfilterdesigns({
         category_id: Number(currentCategory) || null,
         gender_id: Number(currentGender) || null,
         tag_id: finalTagId,
@@ -333,9 +332,37 @@ const ShopTagPageInner = () => {
         userId: Number(userId),
         page: currentPageNo,
       });
+      
+      // Get tags from response
+      const responseTags = filterResponse?.data?.tags || [];
+      setFilterTag(responseTags);
+      
+      // If we didn't have a tag_id but we have a tag name in URL, try to find it from the response
+      if (!finalTagId && tagNameFromUrl && responseTags.length > 0) {
+        const matchedTag = responseTags.find(
+          (tag) => tag?.name?.toLowerCase() === tagNameFromUrl?.toLowerCase()
+        );
+        
+        // If we found a matching tag, make another API call with the correct tag_id
+        if (matchedTag) {
+          const correctTagId = Number(matchedTag.id);
+          filterResponse = await ShopServices.allfilterdesigns({
+            category_id: Number(currentCategory) || null,
+            gender_id: Number(currentGender) || null,
+            tag_id: correctTagId,
+            search: currentSearch,
+            min_price: Number(currentMinPrice) || null,
+            max_price: Number(currentMaxPrice) || null,
+            sort_by: currentSort || selectedOption?.value || null,
+            userType: Number(userType),
+            userId: Number(userId),
+            page: currentPageNo,
+          });
+        }
+      }
+      
       setIsLoading(false);
       setFilterData(filterResponse?.data?.designs || []);
-      setFilterTag(filterResponse?.data?.tags || []);
       setPaginate(filterResponse?.data?.total_records || {});
       setFilterPriceRange({
         minprice: filterResponse?.data?.minprice || 0,

@@ -386,9 +386,9 @@ const Navbar = () => {
                             </div>
 
                             {tags?.map((multitags, index) => {
-                                // Construct Next.js dynamic path
+                                // Construct Next.js dynamic path (without tag_id in query params)
                                 const tagSlug = encodeURIComponent(multitags.name.toLowerCase().replace(/\s+/g, '-'));
-                                const linkPath = `/shop/${tagSlug}?tag_id=${multitags?.id}`;
+                                const linkPath = `/shop/${tagSlug}`;
                                 
                                 return(
                                     <div className="col-md-2" key={index}>
