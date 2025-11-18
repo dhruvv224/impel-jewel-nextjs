@@ -810,10 +810,10 @@ const ShopTagPageInner = () => {
                                 transition={{ duration: 0.5 }}
                               >
                                 <Link
-                                  // ✅ Next.js Link uses 'href'
+                                  // ✅ Clean URL with only slug and code (no query params)
                                   href={`/shopdetails/${encodeURIComponent(
                                     data.name.toLowerCase().replace(/\s+/g, "-")
-                                  )}/${data?.code}?id=${data.id}&name=${encodeURIComponent(data.name)}`} // Pass state via query
+                                  )}/${data?.code}`}
                                 >
                                   <div className="product-thumb">
                                     {data?.image ? (

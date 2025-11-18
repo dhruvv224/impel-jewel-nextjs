@@ -33,11 +33,8 @@ const LatestDesign = () => {
     // Construct a SEO-friendly slug
     const slug = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     
-    // In Next.js, we pass data via URL parameters or an API route, not router state.
-    // We'll pass the ID and code as query parameters, which is safer than relying on URL state.
-    // For a clean URL, we'll construct the path using ID and code. 
-    // You should ensure your shopdetails page can read these query parameters.
-    return `/shopdetails/${slug}?id=${data.id}&code=${data.code}`;
+    // Clean URL with only slug and code (no query params)
+    return `/shopdetails/${slug}/${data.code}`;
   };
 
   return (

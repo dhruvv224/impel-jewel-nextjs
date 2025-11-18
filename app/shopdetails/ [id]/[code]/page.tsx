@@ -22,6 +22,7 @@ import { WishlistSystem } from "../../../context/WishListContext";
 import UserCartService from "../../../services/Cart";
 import Userservice from "../../../services/Auth";
 import productDetail from "../../../services/Shop";
+import ShopServices from "../../../services/Shop";
 import { CartSystem } from "../../../context/CartContext";
 import { Accordion } from "react-bootstrap";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
@@ -44,23 +45,19 @@ export const ShopDetailsInner = ({ params }: { params: { id: string; code: strin
   const router = useRouter(); 
   const pathname = usePathname(); // Equivalent to location.pathname
   const searchParams = useSearchParams(); 
-  // ✅ Get id and code from route params first, fallback to searchParams
-  // Handle both URL patterns: /shopdetails/id/code and /shopdetails/id?code=...
-  const routeId = unwrappedParams?.id || '';
-  const routeCode = unwrappedParams?.code || '';
-  const queryId = searchParams.get('id') || '';
-  const queryCode = searchParams.get('code') || '';
+  // ✅ Get code from route params (clean URL: /shopdetails/slug/code)
+  const routeSlug = unwrappedParams?.id || ''; // Product name slug
+  const routeCode = unwrappedParams?.code || ''; // Design code
   
-  // Use route params if available, otherwise use query params
-  // If routeId is the product name (slug), prefer queryId for the actual product ID
-  const id = queryId || routeId || '';
-  const code = routeCode || queryCode || ''; 
-
-  // ❌ Original: const { id: categoryIdFromState, name: categoryNameFromState } = location.state || {};
-  // Now fetching dynamic data from URL query params. Adjust this based on your actual URL structure.
-  // Use id (which comes from query params or route params) for fetching product details
-  const categoryIdFromState = searchParams.get('categoryId') || searchParams.get('id') || id || ''; 
-  const categoryNameFromState = searchParams.get('categoryName'); 
+  // Fallback to query params for backward compatibility
+  const queryCode = searchParams.get('code') || '';
+  const queryId = searchParams.get('id') || ''; // For backward compatibility only
+  
+  // Use code from route params (primary) or query params (fallback)
+  const code = routeCode || queryCode || '';
+  
+  // Store product ID state (will be found using code)
+  const [productId, setProductId] = useState<string | null>(queryId || null); 
   
   const { dispatch: wishlistDispatch } = useContext(WishlistSystem);
   const { dispatch: removeWishlistDispatch } = useContext(WishlistSystem);
@@ -78,26 +75,64 @@ export const ShopDetailsInner = ({ params }: { params: { id: string; code: strin
   const [spinner, setSpinner] = useState(false);
   const [spinner2, setSpinner2] = useState(false);
   const [accordionOpen, setAccordionOpen] = useState(true);
-
+  
   const toggleAccordion = () => {
     setAccordionOpen(!accordionOpen);
   };
 
+  // First, search for product by code to get the ID
+  useEffect(() => {
+    const findProductIdByCode = async () => {
+      if (!code || productId) return; // Skip if no code or ID already found
+      
+      try {
+        // Search for product by code using the filter API
+        const userType = localStorage.getItem("user_type") || "0";
+        const userId = localStorage.getItem("user_id") || "0";
+        const response = await ShopServices.allfilterdesigns({
+          search: code, // Search by design code
+          page: 1,
+          userType: Number(userType),
+          userId: Number(userId),
+        });
+        
+        // Find the product with exact matching code
+        const foundProduct = response?.data?.designs?.find(
+          (design: any) => design?.code?.toLowerCase() === code.toLowerCase()
+        );
+        
+        if (foundProduct?.id) {
+          setProductId(String(foundProduct.id));
+        } else {
+          console.error("Product not found with code:", code);
+          toast.error("Product not found");
+        }
+      } catch (err) {
+        console.error("Error finding product by code:", err);
+        toast.error("Failed to load product");
+      }
+    };
+
+    findProductIdByCode();
+  }, [code, productId]);
+
+  // Fetch product details using the ID (from code search or query param)
   const { data, isLoading, isError, error } = useQuery({
-    queryKey: ["product_detail", categoryIdFromState],
+    queryKey: ["product_detail", productId],
     queryFn: () =>
       productDetail.product_detail({
-        id: categoryIdFromState,
+        id: productId, // Pass ID in payload (not in URL)
       }),
-    enabled: !!categoryIdFromState, // Only run the query if the ID is present
+    enabled: !!productId, // Only run the query if the ID is present
     onError: (err: any) => {
       console.log("Error fetching products details:", err);
     },
   });
 
   const product = data?.data || {};
-  const img = data?.data?.image || "";
-  const productImages = data?.data?.multiple_image || [];
+  const img = data?.data?.image || null; // Use null instead of empty string
+  // Filter out empty strings from productImages array
+  const productImages = (data?.data?.multiple_image || []).filter((img: string) => img && img.trim() !== '');
 
   const GetUserCartList = async () => {
     UserCartService.CartList({ phone: Phone })
@@ -329,14 +364,16 @@ export const ShopDetailsInner = ({ params }: { params: { id: string; code: strin
                         <div>
                           {productImages?.length === 0 ? (
                             <div id="imageMagnifyer">
-                              <motion.img
-                                src={img}
-                                alt=""
-                                className="w-100"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.5 }}
-                              />
+                              {img ? (
+                                <motion.img
+                                  src={img}
+                                  alt=""
+                                  className="w-100"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  transition={{ duration: 0.5 }}
+                                />
+                              ) : null}
                             </div>
                           ) : (
                             <div className="detalis_slider">
@@ -347,19 +384,21 @@ export const ShopDetailsInner = ({ params }: { params: { id: string; code: strin
                                 interval={3000}
                               >
                                 {productImages?.map((image, index) => (
-                                  <div
-                                    key={index}
-                                    onClick={() => openLightbox(index)}
-                                  >
-                                    <motion.img
-                                      src={image}
-                                      alt=""
-                                      className="w-100"
-                                      initial={{ opacity: 0 }}
-                                      animate={{ opacity: 1 }}
-                                      transition={{ duration: 0.5 }}
-                                    />
-                                  </div>
+                                  image ? (
+                                    <div
+                                      key={index}
+                                      onClick={() => openLightbox(index)}
+                                    >
+                                      <motion.img
+                                        src={image}
+                                        alt=""
+                                        className="w-100"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ duration: 0.5 }}
+                                      />
+                                    </div>
+                                  ) : null
                                 ))}
                               </Carousel>
 
@@ -372,14 +411,16 @@ export const ShopDetailsInner = ({ params }: { params: { id: string; code: strin
                                     >
                                       <RxCross1 />
                                     </span>
-                                    <motion.img
-                                      src={productImages[currentImageIndex]}
-                                      alt=""
-                                      className="w-50"
-                                      initial={{ opacity: 0 }}
-                                      animate={{ opacity: 1 }}
-                                      transition={{ duration: 0.5 }}
-                                    />
+                                    {productImages[currentImageIndex] && (
+                                      <motion.img
+                                        src={productImages[currentImageIndex]}
+                                        alt=""
+                                        className="w-50"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ duration: 0.5 }}
+                                      />
+                                    )}
                                     <div className="lightbox-navigation">
                                       <button
                                         onClick={() => navigateLightbox(-1)}

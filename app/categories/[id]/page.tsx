@@ -119,10 +119,7 @@ const CategoriesItemsInner = () => {
                         return (
                           <div className="col-lg-3 col-md-6 col-12" key={data.id}>
                             <div className="item-product text-center">
-                              <Link href={{
-                                pathname: `/shopdetails/${slug}/${data?.code}`,
-                                query: { id: data.id, name: data.name }
-                              }}>
+                              <Link href={`/shopdetails/${slug}/${data?.code}`}>
                                 <div className="product-thumb">
                                   {data?.image ? (
                                     <motion.img
