@@ -405,14 +405,6 @@ const Home = () => {
           <div className="container">
             <div className="more_categories_detail">
               <h3>Browse our categories</h3>
-              {/* Replaced <Link to={...}> with <Link href={...}> */}
-              <Link
-                href="/categories"
-                className="custom-btn btn-16 mb-4"
-                style={{ textDecoration: "none" }}
-              >
-                View All
-              </Link>
             </div>
             <div className="second_banner_button">
               <button
@@ -495,6 +487,16 @@ const Home = () => {
                   <></>
                 )}
               </Swiper>
+            </div>
+            {/* Replaced <Link to={...}> with <Link href={...}> */}
+            <div style={{ textAlign: "center", marginTop: "20px" }}>
+              <Link
+                href="/categories"
+                className="custom-btn btn-16 mb-4"
+                style={{ textDecoration: "none" }}
+              >
+                View All
+              </Link>
             </div>
           </div>
         </section>
@@ -579,14 +581,6 @@ const Home = () => {
             <div className="new_arrival_detail">
               <h3>New Arrivals</h3>
             </div>
-            {/* Replaced <Link to={...}> with <Link href={...}> */}
-            <Link
-              href="/latest-designs"
-              className="custom-btn btn-16 mb-4"
-              style={{ textDecoration: "none" }}
-            >
-              View All
-            </Link>
             <div className="second_banner_button">
               <button
                 onClick={() => thirdbannerRef?.current?.slidePrev()}
@@ -642,12 +636,9 @@ const Home = () => {
 
                       return (
                         <SwiperSlide key={index}>
-                          {/* Replaced <Link to={...} state={...}> with <Link href={...} query={...}> */}
+                          {/* Replaced <Link to={...} state={...}> with <Link href={...}> */}
                           <Link
-                            href={{
-                                pathname: linkPath,
-                                query: { id: data.id, name: data.name },
-                            }}
+                            href={linkPath}
                             className="text-decoration-none"
                             style={{ color: "#000" }}
                           >
@@ -669,6 +660,16 @@ const Home = () => {
                   <></>
                 )}
               </Swiper>
+            </div>
+            {/* Replaced <Link to={...}> with <Link href={...}> */}
+            <div style={{ textAlign: "center", marginTop: "20px" }}>
+              <Link
+                href="/latest-designs"
+                className="custom-btn btn-16 mb-4"
+                style={{ textDecoration: "none" }}
+              >
+                View All
+              </Link>
             </div>
           </div>
         </section>
@@ -750,14 +751,6 @@ const Home = () => {
             <div className="seller_header">
               <h3>Top sellers</h3>
             </div>
-            {/* Replaced <Link to={...}> with <Link href={...}> */}
-            <Link
-              href="/top-selling-designs"
-              className="custom-btn btn-16 mb-4"
-              style={{ textDecoration: "none" }}
-            >
-              View All
-            </Link>
             <div className="second_banner_button">
               <button
                 onClick={() => fourthbannerRef?.current?.slidePrev()}
@@ -828,6 +821,16 @@ const Home = () => {
                   <></>
                 )}
               </Swiper>
+            </div>
+            {/* Replaced <Link to={...}> with <Link href={...}> */}
+            <div style={{ textAlign: "center", marginTop: "20px" }}>
+              <Link
+                href="/top-selling-designs"
+                className="custom-btn btn-16 mb-4"
+                style={{ textDecoration: "none" }}
+              >
+                View All
+              </Link>
             </div>
           </div>
         </section>

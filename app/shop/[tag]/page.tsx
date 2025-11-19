@@ -320,18 +320,27 @@ const ShopTagPageInner = () => {
 
     try {
       // Make the first API call (with tag_id if we found it from filterTag state)
-      let filterResponse = await ShopServices.allfilterdesigns({
-        category_id: Number(currentCategory) || null,
-        gender_id: Number(currentGender) || null,
-        tag_id: finalTagId,
-        search: currentSearch,
-        min_price: Number(currentMinPrice) || null,
-        max_price: Number(currentMaxPrice) || null,
-        sort_by: currentSort || selectedOption?.value || null,
-        userType: Number(userType),
-        userId: Number(userId),
-        page: currentPageNo,
-      });
+      let filterResponse;
+      try {
+        filterResponse = await ShopServices.allfilterdesigns({
+          category_id: Number(currentCategory) || null,
+          gender_id: Number(currentGender) || null,
+          tag_id: finalTagId,
+          search: currentSearch,
+          min_price: Number(currentMinPrice) || null,
+          max_price: Number(currentMaxPrice) || null,
+          sort_by: currentSort || selectedOption?.value || null,
+          userType: Number(userType),
+          userId: Number(userId),
+          page: currentPageNo,
+        });
+      } catch (err) {
+        const errorMessage = typeof err === 'string' ? err : err?.message || 'Failed to fetch products';
+        console.error("Error fetching products:", errorMessage, err);
+        toast.error(errorMessage || "Failed to fetch products");
+        setIsLoading(false);
+        return;
+      }
       
       // Get tags from response
       const responseTags = filterResponse?.data?.tags || [];
@@ -346,18 +355,26 @@ const ShopTagPageInner = () => {
         // If we found a matching tag, make another API call with the correct tag_id
         if (matchedTag) {
           const correctTagId = Number(matchedTag.id);
-          filterResponse = await ShopServices.allfilterdesigns({
-            category_id: Number(currentCategory) || null,
-            gender_id: Number(currentGender) || null,
-            tag_id: correctTagId,
-            search: currentSearch,
-            min_price: Number(currentMinPrice) || null,
-            max_price: Number(currentMaxPrice) || null,
-            sort_by: currentSort || selectedOption?.value || null,
-            userType: Number(userType),
-            userId: Number(userId),
-            page: currentPageNo,
-          });
+          try {
+            filterResponse = await ShopServices.allfilterdesigns({
+              category_id: Number(currentCategory) || null,
+              gender_id: Number(currentGender) || null,
+              tag_id: correctTagId,
+              search: currentSearch,
+              min_price: Number(currentMinPrice) || null,
+              max_price: Number(currentMaxPrice) || null,
+              sort_by: currentSort || selectedOption?.value || null,
+              userType: Number(userType),
+              userId: Number(userId),
+              page: currentPageNo,
+            });
+          } catch (err) {
+            const errorMessage = typeof err === 'string' ? err : err?.message || 'Failed to fetch products with tag';
+            console.error("Error fetching products with tag:", errorMessage, err);
+            toast.error(errorMessage || "Failed to fetch products with tag");
+            setIsLoading(false);
+            return;
+          }
         }
       }
       
@@ -369,12 +386,29 @@ const ShopTagPageInner = () => {
         maxprice: filterResponse?.data?.maxprice || 0,
       });
 
-      const categoryRes = await FilterServices.categoryFilter();
-      setCategoryData(categoryRes?.data || []);
+      // Fetch category and gender filters separately to avoid breaking the whole flow
+      let categoryRes = null;
+      let genderRes = null;
+      
+      try {
+        categoryRes = await FilterServices.categoryFilter();
+        setCategoryData(categoryRes?.data || []);
+      } catch (err) {
+        const errorMessage = typeof err === 'string' ? err : err?.message || 'Failed to fetch categories';
+        console.error("Error fetching categories:", errorMessage, err);
+        // Don't show toast for filter failures, just log it
+      }
 
-      const genderRes = await FilterServices.genderFilter();
-      setGenderData(genderRes?.data || []);
+      try {
+        genderRes = await FilterServices.genderFilter();
+        setGenderData(genderRes?.data || []);
+      } catch (err) {
+        const errorMessage = typeof err === 'string' ? err : err?.message || 'Failed to fetch genders';
+        console.error("Error fetching genders:", errorMessage, err);
+        // Don't show toast for filter failures, just log it
+      }
 
+      // Set selected category if we have the data
       if (categoryRes?.data && currentCategory) {
         const Category_ids = categoryRes?.data?.find(
           (item) => item?.id === Number(currentCategory)
@@ -397,6 +431,7 @@ const ShopTagPageInner = () => {
         setSelectedOption(null);
       }
 
+      // Set selected gender if we have the data
       if (genderRes?.data && currentGender) {
         const Gender_ids = genderRes?.data?.find(
           (item) => item?.id === Number(currentGender)
@@ -442,8 +477,9 @@ const ShopTagPageInner = () => {
         setSelectedPriceOption(null);
       }
     } catch (err) {
-      console.error("Error fetching filter data:", err);
-      toast.error("Failed to fetch filter data");
+      const errorMessage = typeof err === 'string' ? err : err?.message || 'An unexpected error occurred';
+      console.error("Error fetching filter data:", errorMessage, err);
+      toast.error(errorMessage || "Failed to fetch filter data");
       setIsLoading(false);
     }
   };
