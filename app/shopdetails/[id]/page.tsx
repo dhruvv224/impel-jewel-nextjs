@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense, use } from 'react';
-import { ShopDetailsInner } from '../ [id]/[code]/page';
+import { ShopDetailsInner } from './[code]/page';
 
 // This page handles single-segment URLs like /shopdetails/earring?id=4935&code=BT5129
 // The component reads id and code from query params, so we pass empty code in params

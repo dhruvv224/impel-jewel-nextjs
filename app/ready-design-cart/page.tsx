@@ -18,7 +18,7 @@ import { IoIosCloseCircleOutline } from "react-icons/io";
 import { Spin } from "antd";
 import { LoadingOutlined } from "@ant-design/icons";
 import Select from "react-select";
-const api = process.env.NEXT_PUBLIC_API_KEY;
+const api = process.env.NEXT_PUBLIC_API_KEY || "https://admin.impel.store/api/";
 
 const ReadyDesignCartInner = () => {
   const router = useRouter();
@@ -42,6 +42,7 @@ const ReadyDesignCartInner = () => {
   // Fix context usage
   const { dispatch: removeFromCartDispatch } = useContext(ReadyDesignCartSystem as any);
   const { dispatch: resetcartcount } = useContext(ReadyDesignCartSystem as any);
+  const { dispatch: setCartDispatch } = useContext(ReadyDesignCartSystem as any);
   const { dispatch: profilename, state: namestate } = useContext(ProfileSystem as any);
 
   const [isLoading, setIsLoading] = useState(true);
@@ -194,12 +195,21 @@ const ReadyDesignCartInner = () => {
         phone: phone,
       })
       .then((res) => {
-        setItems(res?.data?.data?.carts || []);
+        const cartData = res?.data?.data?.carts || [];
+        setItems(cartData);
+        // Update context with cart data to update navbar badge
+        if (setCartDispatch) {
+          setCartDispatch({ type: "SET_CART", payload: { cart: cartData } });
+        }
         setIsLoading(false);
       })
       .catch((err) => {
         console.log(err);
         setItems([]);
+        // Update context with empty cart
+        if (setCartDispatch) {
+          setCartDispatch({ type: "SET_CART", payload: { cart: [] } });
+        }
         setIsLoading(false);
       });
   };
