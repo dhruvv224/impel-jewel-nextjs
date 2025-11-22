@@ -663,8 +663,23 @@ const ReadyDesignCartInner = () => {
               localStorage.removeItem("dealerDiscount");
               localStorage.removeItem("dealermessage");
               
+              // Extract order ID - handle different response structures
+              const orderId = orderRes?.data?.data?.order_id || 
+                             orderRes?.data?.data?.id || 
+                             orderRes?.data?.order_id || 
+                             orderRes?.data?.data;
+              
+              console.log("Ready order placed successfully. Order ID:", orderId, "Full response:", orderRes?.data);
+              
               setTimeout(() => {
-                router.push(`/ready-order-details/?${orderRes?.data?.data}`);
+                if (orderId) {
+                  // Use query parameter format for ready-order-details page
+                  router.push(`/ready-order-details?order_id=${orderId}`);
+                } else {
+                  console.error("Order ID not found in response:", orderRes?.data);
+                  toast.error("Order placed but order ID not found. Please check your orders.");
+                  router.push("/my-ready-orders");
+                }
               }, 1000);
             } else {
               toast.error(orderRes.data.message);

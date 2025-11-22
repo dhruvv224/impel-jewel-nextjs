@@ -21,10 +21,14 @@ const ReadyOrderDetailsInner = () => {
   const searchParams = useSearchParams();
 
   
-  // Get order ID from query parameter (e.g., /ready-order-details?12345)
-  // Note: The original implementation used location.search.substring(1) which is unconventional.
-  // We extract the first value assuming the URL structure remains "?orderId" or similar.
-  const dynamicId = searchParams.toString().split('=')[0] || searchParams.get('orderId'); 
+  // Get order ID from query parameter (e.g., /ready-order-details?order_id=12345)
+  // Try multiple possible parameter names
+  const dynamicId = searchParams.get('order_id') || 
+                    searchParams.get('orderId') || 
+                    searchParams.get('id') ||
+                    (searchParams.toString().includes('=') 
+                      ? searchParams.toString().split('=')[1] 
+                      : searchParams.toString()); 
 
   // Local Storage states
   const [user_id, setUserId] = useState(null);

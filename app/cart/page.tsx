@@ -831,9 +831,24 @@ const Cart = () => {
                     localStorage.removeItem("savedDiscount");
                     localStorage.removeItem("cartItems");
                     localStorage.removeItem("message");
+                    
+                    // Extract order ID - handle different response structures
+                    const orderId = res?.data?.data?.order_id || 
+                                   res?.data?.data?.id || 
+                                   res?.data?.order_id || 
+                                   res?.data?.data;
+                    
+                    console.log("Order placed successfully. Order ID:", orderId, "Full response:", res?.data);
+                    
                     setTimeout(() => {
-                      // ✅ Next.js App Router navigation
-                      router.push(`/order-details/${res?.data?.data}`);
+                      if (orderId) {
+                        // ✅ Next.js App Router navigation
+                        router.push(`/order-details/${orderId}`);
+                      } else {
+                        console.error("Order ID not found in response:", res?.data);
+                        toast.error("Order placed but order ID not found. Please check your orders.");
+                        router.push("/my-orders");
+                      }
                     }, 2000);
                   } else {
                     toast.error(res.data.message);

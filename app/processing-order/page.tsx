@@ -757,8 +757,23 @@ const Cart = () => {
                 localStorage.removeItem("savedDiscount");
                 localStorage.removeItem("cartItems");
                 localStorage.removeItem("message");
-                // Navigate to order details page
-                router.replace(`/order-details/${res.data.data}`); 
+                
+                // Extract order ID - handle different response structures
+                const orderId = res?.data?.data?.order_id || 
+                               res?.data?.data?.id || 
+                               res?.data?.order_id || 
+                               res?.data?.data;
+                
+                console.log("Order placed successfully. Order ID:", orderId, "Full response:", res?.data);
+                
+                if (orderId) {
+                    // Navigate to order details page
+                    router.push(`/order-details/${orderId}`);
+                } else {
+                    console.error("Order ID not found in response:", res?.data);
+                    toast.error("Order placed but order ID not found. Please check your orders.");
+                    router.push("/my-orders");
+                }
             } else {
                 throw new Error(res?.data?.message || "Order placement failed.");
             }
