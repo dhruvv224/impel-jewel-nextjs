@@ -1,6 +1,6 @@
 'use client'; // 👈 Mark as a Client Component
 
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation"; // 👈 Use Next.js hook for query params
 // Removed: import { Link, useLocation, useParams } from "react-router-dom";
@@ -14,22 +14,28 @@ import Userservice from "../services/Cart"; // Assuming path is correct
 // Removed: import noImage from "../../assets/images/No_Image_Available.jpg";
 
 // Access Next.js public environment variable
-const api = process.env.NEXT_PUBLIC_API_KEY;
+const api = process.env.NEXT_PUBLIC_API_KEY || 'https://admin.impel.store/api/';
 const NO_IMAGE_URL = "https://upload.wikimedia.org/wikipedia/commons/1/14/No_Image_Available.jpg?20200913095930";
 
 const ReadyOrderDetailsInner = () => {
   const searchParams = useSearchParams();
 
-  
   // Get order ID from query parameter (e.g., /ready-order-details?order_id=12345)
-  // Try multiple possible parameter names
-  const dynamicId = searchParams.get('order_id') || 
-                    searchParams.get('orderId') || 
-                    searchParams.get('id') ||
-                    (searchParams.toString().includes('=') 
-                      ? searchParams.toString().split('=')[1] 
-                      : searchParams.toString()); 
-
+  // Try multiple possible parameter names, or fall back to unnamed parameter
+  let dynamicId =
+  searchParams.get("order_id") ||
+  searchParams.get("orderId") ||
+  searchParams.get("id");
+  
+  // If no named parameter found, try to get unnamed parameter from query string
+  if (!dynamicId) {
+    const queryString = typeof window !== "undefined" ? window.location.search : "";
+    const match = queryString.match(/^\?([^=&]+)$/); // Match ?value format (no = sign)
+    if (match) {
+      dynamicId = match[1];
+    }
+  }
+console.log("Dynamic Order ID:", dynamicId);
   // Local Storage states
   const [user_id, setUserId] = useState(null);
   const [user_type, setUserType] = useState(null);
@@ -41,7 +47,6 @@ const ReadyOrderDetailsInner = () => {
   const [trackStatus, setTrackStatus] = useState(null);
 
   // Status state to check if the overall order details API call succeeded or failed
-  // Using a distinct success/failure flag instead of re-using order_status string
   const [orderApiSuccess, setOrderApiSuccess] = useState(false); 
 
   // 1. Fetch localStorage data client-side
@@ -52,9 +57,12 @@ const ReadyOrderDetailsInner = () => {
     }
   }, []);
 
-  const GetUserOrders = async (orderId, uId, uType) => {
+  // Defined with useCallback to prevent infinite re-renders or stale closures
+  const GetUserOrders = useCallback(async (orderId, uId, uType) => {
+    console.log("Fetching order details for:", { orderId, uId, uType });
     if (!orderId || !uId || !uType || !api) {
-        setIsLoading(false);
+        // Only stop loading if we actually tried to check and failed parameters
+        if(!orderId && uId) setIsLoading(false); 
         return;
     }
     
@@ -103,15 +111,18 @@ const ReadyOrderDetailsInner = () => {
         setOrderApiSuccess(false);
         setIsLoading(false);
       });
-  };
+  }, []); // Empty dependency array as it only uses external constants or setters
 
   // 2. Fetch data when order ID and user data are available
   useEffect(() => {
+    // Only attempt call if we have dynamicId and user data is loaded (not null)
     if (dynamicId && user_id !== null && user_type !== null) {
         GetUserOrders(dynamicId, user_id, user_type);
+    } else if (user_id !== null && !dynamicId) {
+        // If user is loaded but no ID found, stop loader so it doesn't spin forever
+        setIsLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dynamicId, user_id, user_type]);
+  }, [dynamicId, user_id, user_type, GetUserOrders]); // Added GetUserOrders to dependencies
 
   // 3. Fetch Product Prices
   useEffect(() => {
@@ -126,7 +137,6 @@ const ReadyOrderDetailsInner = () => {
   }, []); // Run once on client mount
 
   // Price array logic (retained original structure)
-  // Note: This logic seems redundant and likely only accesses the first element.
   var finalPrice = [
     { price_24k: allPrices?.price_24k },
     { sales_wastage: allPrices?.sales_wastage_rtd },
