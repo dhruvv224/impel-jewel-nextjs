@@ -8,9 +8,13 @@ import Image from "next/image"; // For logo optimization
 // Removed: import { useLocation, useNavigate } from "react-router-dom";
 // import "./OrderTrack.css";
 import Userservice from "../services/Cart";
+import axios from "axios";
 import { FaBox, FaCheck, FaRegUser, FaTruck } from "react-icons/fa";
 // Assuming this path is correct for a local image file
 import Loader from "../components/common/Loader";
+
+// Access Next.js public environment variable
+const api = process.env.NEXT_PUBLIC_API_KEY || 'https://admin.impel.store/api/';
 
 // Define the absolute path for the logo for the Next.js Image component
 // Note: If 'assets/images/logo.png' is a local file, Next.js Image component is preferred.
@@ -20,33 +24,34 @@ const OrderTracking = () => {
   const searchParams = useSearchParams(); // 👈 Next.js hook for query 
 
   
-  // Get the order number from the query parameter (e.g., /order-tracking?order_number=XYZ)
-  const dynamicId = searchParams.get('order_number'); 
-
-  const [Items, setItems] = useState(null); // Changed initial state to null
-  const [trackStatus, setTrackStatus] = useState(null); // Changed initial state to null
-  const [product, setProduct] = useState([]);
-  const [message, setMessage] = useState(null); // Corrected typo in original code
+  // Get the order number from the query parameter (e.g., /order-tracking?order_number=XYZ or ?transaction_id=XYZ)
+  const dynamicId =searchParams.get('transaction_id'); 
+  console.log(dynamicId,"dynamicId")
+  const [Items, setItems] = useState<any>(null); // Changed initial state to null
+  const [trackStatus, setTrackStatus] = useState<any>(null); // Changed initial state to null
+  const [product, setProduct] = useState<any[]>([]);
+  const [message, setMessage] = useState<string | null>(null); // Corrected typo in original code
   const [isLoading, setIsLoading] = useState(true); // Changed initial state to true
   const [itemStatus, setItemStatus] = useState(false);
-
-  const GetUserOrders = async (orderNumber) => {
+  const GetUserOrders = async (orderNumber: string | null) => {
     if (!orderNumber) {
         setIsLoading(false);
         return;
     }
     
-    Userservice.OrdersTracking({
-      order_number: orderNumber,
-    })
+    axios
+      .post(api + "order-track-details", {
+        order_number: orderNumber,
+      })
       .then((res) => {
-        setItems(res?.data);
-        setProduct(res.data?.order_items || []);
-        setMessage(res?.message);
-        setItemStatus(res.status); // true/false status from API
+        const responseData = res?.data;
+        setItems(responseData?.data);
+        setProduct(responseData?.data?.order_items || []);
+        setMessage(responseData?.message);
+        setItemStatus(responseData?.status); // true/false status from API
 
-        if (res?.status === true && res?.data?.docate_number) {
-          const docketNumber = res.data.docate_number;
+        if (responseData?.status === true && responseData?.data?.docate_number) {
+          const docketNumber = responseData.data.docate_number;
 
           // Nested call for Delivery Track
           Userservice.DeliveryTrack({
